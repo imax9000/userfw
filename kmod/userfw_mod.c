@@ -2,6 +2,7 @@
 #include <sys/systm.h>
 #include <sys/module.h>
 #include <sys/kernel.h>
+#include "userfw.h"
 
 static int
 userfw_modevent(module_t mod, int type, void *p)
@@ -11,9 +12,11 @@ userfw_modevent(module_t mod, int type, void *p)
 	switch (type)
 	{
 	case MOD_LOAD:
+		err = userfw_init();
 		printf("userfw loaded\n");
 		break;
 	case MOD_UNLOAD:
+		err = userfw_uninit();
 		printf("userfw unloaded\n");
 		break;
 	default:
