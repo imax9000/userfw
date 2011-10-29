@@ -17,8 +17,8 @@ enum userfw_match_type
 	,M_OR
 	,M_AND
 	,M_NOT
-	,M_SRCADDR
-	,M_DSTADDR
+	,M_SRCIPV4
+	,M_DSTIPV4
 	,M_SRCPORT
 	,M_SRCPORT
 	,M_UID

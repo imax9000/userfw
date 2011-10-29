@@ -29,9 +29,8 @@ typedef union __userfw_match
 	struct
 	{
 		uint16_t	type;
-		uint8_t	length;
-		uint8_t *addr;
-	} MatchAddr;
+		uint32_t	addr;
+	} MatchIPv4Addr;
 
 	struct
 	{
