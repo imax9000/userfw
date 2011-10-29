@@ -20,7 +20,7 @@ enum userfw_match_type
 	,M_SRCIPV4
 	,M_DSTIPV4
 	,M_SRCPORT
-	,M_SRCPORT
+	,M_DSTPORT
 	,M_UID
 	,M_IMAGENAME
 	,M_IMAGEPATH
