@@ -5,6 +5,7 @@
 #include <sys/mbuf.h>
 #include <net/if.h>
 #include <net/pfil.h>
+#include "userfw.h"
 
 int userfw_pfil_hook(void *arg, struct mbuf **mb, struct ifnet *ifp, int dir, struct inpcb *pcb);
 int userfw_pfil_attach(int attach);
@@ -25,6 +26,32 @@ int
 userfw_pfil_hook(void *arg, struct mbuf **mb, struct ifnet *ifp, int dir, struct inpcb *pcb)
 {
 	int ret = 0; /* default to pass */
+	userfw_chk_args args;
+	userfw_action action;
+	
+	args.af = (int)arg;
+	args.ifp = ifp;
+	args.dir = (dir == PFIL_IN) ? USERFW_IN : USERFW_OUT; /* looks ugly */
+	args.inpcb = pcb;
+
+	action = userfw_chk(mb, &args);
+
+	switch (action.type)
+	{
+	case A_ALLOW:
+		ret = 0;
+		break;
+	case A_DENY:
+		ret = EACCES;
+		break;
+	case A_ASK:
+		ret = 0;
+		printf("userfw: A_ASK not implemented yet.\n");
+		break;
+	default:
+		printf("userfw: userfw_chk returned unknown action type: %d\n", action.type);
+		break;
+	}
 
 	return ret;
 }
@@ -40,7 +67,7 @@ userfw_pfil_attach(int attach)
 		return ENOENT;
 
 	err = (attach ? pfil_add_hook : pfil_remove_hook)
-		(userfw_pfil_hook, NULL, PFIL_IN | PFIL_OUT | PFIL_WAITOK, ip4_head);
+		(userfw_pfil_hook, (void*)AF_INET, PFIL_IN | PFIL_OUT | PFIL_WAITOK, ip4_head);
 
 	return err;
 }

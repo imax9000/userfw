@@ -25,3 +25,12 @@ int userfw_uninit()
 
 	return err;
 }
+
+userfw_action
+userfw_chk(struct mbuf **mb, userfw_chk_args *args)
+{
+	userfw_action ret;
+	ret.type = A_ALLOW;
+	
+	return ret;
+}
