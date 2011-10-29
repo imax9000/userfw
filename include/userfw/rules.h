@@ -4,25 +4,35 @@
 #define	USERFW_RULES_VERSION	20111026
 
 /* Packet direction */
-#define USERFW_IN	0
-#define USERFW_OUT	1
+enum userfw_direction
+{
+	USERFW_IN = 0
+	,USERFW_OUT
+};
 
 /* Match types */
-#define M_OR	0
-#define M_AND	1
-#define M_NOT	2
-#define M_SRCADDR	3
-#define M_DSTADDR	4
-#define M_SRCPORT	5
-#define M_DSTPORT	6
-#define M_UID	7
-#define M_IMAGENAME	8
-#define M_IMAGEPATH	9
-#define M_IMAGEMD5	10
+enum userfw_match_type
+{
+	M_ANY = 0
+	,M_OR
+	,M_AND
+	,M_NOT
+	,M_SRCADDR
+	,M_DSTADDR
+	,M_SRCPORT
+	,M_SRCPORT
+	,M_UID
+	,M_IMAGENAME
+	,M_IMAGEPATH
+	,M_IMAGEMD5
+};
 
 /* Action types */
-#define A_ALLOW	0
-#define A_DENY	1
-#define A_ASK	2
+enum userfw_action_type
+{
+	A_ALLOW = 0
+	,A_DENY
+	,A_ASK
+};
 
 #endif /* USERFW_RULES_H */
