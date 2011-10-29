@@ -7,11 +7,6 @@
 typedef union __userfw_action
 {
 	uint16_t	type;
-
-	struct
-	{
-		uint16_t	type;
-	} Simple;
 } userfw_action;
 
 typedef union __userfw_match
@@ -59,9 +54,11 @@ typedef union __userfw_match
 
 typedef struct __userfw_rule
 {
+	struct __userfw_rule *next;
+
 	uint16_t	number;
-	userfw_action	*action;
-	userfw_match	*match;
+	userfw_action	action;
+	userfw_match	match;
 } userfw_rule;
 
 
