@@ -21,6 +21,8 @@ enum userfw_match_type
 	,M_DSTIPV4
 	,M_SRCPORT
 	,M_DSTPORT
+	,M_IN
+	,M_OUT
 	,M_UID
 	,M_IMAGENAME
 	,M_IMAGEPATH

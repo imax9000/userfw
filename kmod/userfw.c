@@ -232,6 +232,10 @@ match_packet(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, struc
 		return cache->ports_found && match->MatchPort.port == cache->src_port;
 	case M_DSTPORT:
 		return cache->ports_found && match->MatchPort.port == cache->dst_port;
+	case M_IN:
+		return args->dir == USERFW_IN;
+	case M_OUT:
+		return args->dir == USERFW_OUT;
 	}
 	
 	return 0;
