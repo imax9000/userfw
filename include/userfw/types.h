@@ -13,4 +13,15 @@ enum userfw_direction
 	,USERFW_OUT
 };
 
+typedef enum __userfw_type
+{
+	T_STRING = 0
+	,T_UINT16
+	,T_UINT32
+	,T_IPv4
+	,T_MATCH
+} userfw_type;
+
+#define T_PORT	T_UINT16
+
 #endif /* USERFW_TYPES_H */

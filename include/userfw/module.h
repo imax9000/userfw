@@ -9,14 +9,6 @@ struct mbuf;
 #define	USERFW_ARGS_MAX	8
 #define	USERFW_NAME_LEN	16
 
-typedef enum __userfw_type
-{
-	T_STRING = 0
-	,T_UINT16
-	,T_UINT32
-	,T_MATCH
-} userfw_type;
-
 typedef struct __userfw_chk_args
 {
 	int	af;
@@ -25,14 +17,40 @@ typedef struct __userfw_chk_args
 	struct inpcb	*inpcb;
 } userfw_chk_args;
 
-typedef struct __userfw_arg
-{
-	uint8_t	type;
-	void	*data;
-} userfw_arg;
-
 typedef struct __userfw_match userfw_match;
 typedef struct __userfw_action userfw_action;
+
+typedef union __userfw_arg
+{
+	uint8_t type;
+	struct
+	{
+		uint8_t type;
+		uint16_t    length;
+		char    *data;
+	} string;
+	struct
+	{
+		uint8_t type;
+		uint16_t    value;
+	} uint16;
+	struct
+	{
+		uint8_t type;
+		uint32_t    value;
+	} uint32;
+	struct
+	{
+		uint8_t type;
+		uint32_t    addr;
+		uint32_t    mask;
+	} ipv4;
+	struct
+	{
+		uint8_t type;
+		userfw_match *p;
+	} match;
+} userfw_arg;
 
 typedef int (*userfw_match_fn)(struct mbuf **, userfw_chk_args *, userfw_match *, userfw_cache *);
 typedef int (*userfw_action_fn)(struct mbuf **, userfw_chk_args *, userfw_action *, userfw_cache *);
