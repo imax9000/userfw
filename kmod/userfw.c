@@ -8,23 +8,6 @@
 #include <netinet/udp.h>
 #include <netinet/sctp.h>
 
-struct match_cache
-{
-	uint8_t	ports_found;
-	uint8_t	uid_found;
-	uint8_t	imagename_found;
-	uint8_t	imagepath_found;
-	uint8_t	imagemd5_found;
-
-	uint16_t	src_port;
-	uint16_t	dst_port;
-	
-	uint32_t	uid;
-	char	*imagename;
-	char	*imagepath;
-	char	*imagemd5;
-};
-
 userfw_ruleset global_rules;
 
 userfw_modinfo *userfw_modules;
@@ -33,7 +16,6 @@ int userfw_modules_count;
 void init_ruleset(userfw_ruleset *p);
 void delete_ruleset(userfw_ruleset *p);
 int check_packet(struct mbuf **mb, int global, userfw_chk_args *args, userfw_ruleset *ruleset);
-int match_packet(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, struct match_cache *cache);
 void delete_match_data(userfw_match *match);
 void delete_action_data(userfw_action *match);
 
