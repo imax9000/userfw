@@ -68,13 +68,37 @@ init_ruleset(userfw_ruleset *p)
 void
 delete_match_data(userfw_match *match)
 {
-	/* TODO */
+	int i;
+
+	for(i = 0; i < match->nargs; i++)
+	{
+		switch (match->args[i].type)
+		{
+		case T_STRING:
+			free(match->args[i].string.data, M_USERFW);
+			break;
+		case T_MATCH:
+			delete_match_data(match->args[i].match.p);
+			free(match->args[i].match.p, M_USERFW);
+			break;
+		}
+	}
 }
 
 void
 delete_action_data(userfw_action *match)
 {
-	/* TODO */
+	int i;
+
+	for(i = 0; i < match->nargs; i++)
+	{
+		switch (match->args[i].type)
+		{
+		case T_STRING:
+			free(match->args[i].string.data, M_USERFW);
+			break;
+		}
+	}
 }
 
 void
