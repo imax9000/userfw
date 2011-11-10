@@ -27,11 +27,15 @@ struct match_cache
 
 userfw_ruleset global_rules;
 
-void init_ruleset(userfw_ruleset *p, int default_deny);
+userfw_modinfo *userfw_modules;
+int userfw_modules_count;
+
+void init_ruleset(userfw_ruleset *p);
 void delete_ruleset(userfw_ruleset *p);
-userfw_action check_packet(struct mbuf **mb, int global, userfw_chk_args *args, userfw_ruleset *ruleset);
+int check_packet(struct mbuf **mb, int global, userfw_chk_args *args, userfw_ruleset *ruleset);
 int match_packet(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, struct match_cache *cache);
 void delete_match_data(userfw_match *match);
+void delete_action_data(userfw_action *match);
 
 MALLOC_DEFINE(M_USERFW, "userfw", "Memory for userfw rules and cache");
 
@@ -41,13 +45,7 @@ int userfw_init()
 
 	err = userfw_dev_register();
 
-	init_ruleset(&global_rules,
-#ifndef	USERFW_DEFAULT_TO_DENY
-		0
-#else
-		1
-#endif
-		);
+	init_ruleset(&global_rules);
 
 	USERFW_INIT_LOCK(&global_rules, "userfw global ruleset lock");
 
@@ -73,50 +71,28 @@ int userfw_uninit()
 	return err;
 }
 
-userfw_action
+int
 userfw_chk(struct mbuf **mb, userfw_chk_args *args)
 {
 	return check_packet(mb, 1, args, &global_rules);
 }
 
 void
-init_ruleset(userfw_ruleset *p, int default_deny)
+init_ruleset(userfw_ruleset *p)
 {
-	p->rule = malloc(sizeof(userfw_rule), M_USERFW, M_WAITOK | M_ZERO);
-	if (p->rule != NULL)
-	{
-		p->rule->next = NULL;
-		p->rule->number = (uint16_t)0xffff;
-		p->rule->action.type = default_deny ? A_DENY : A_ALLOW;
-		p->rule->match.type = M_ANY;
-	}
+	p->rule = NULL;
 }
 
 void
 delete_match_data(userfw_match *match)
 {
-	int i;
+	/* TODO */
+}
 
-	switch(match->type)
-	{
-	case M_AND:
-	case M_OR:
-		for(i = 0; i < match->LogicBlock.count; i++)
-		{
-			delete_match_data(&(match->LogicBlock.rules[i]));
-			free(&(match->LogicBlock.rules[i]), M_USERFW);
-		}
-		break;
-	case M_NOT:
-		delete_match_data(match->NotBlock.rule);
-		free(match->NotBlock.rule, M_USERFW);
-		break;
-	case M_IMAGENAME:
-	case M_IMAGEPATH:
-	case M_IMAGEMD5:
-		free(match->MatchImage.str, M_USERFW);
-		break;
-	}
+void
+delete_action_data(userfw_action *match)
+{
+	/* TODO */
 }
 
 void
@@ -128,66 +104,29 @@ delete_ruleset(userfw_ruleset *p)
 	{
 		next = current->next;
 		delete_match_data(&(current->match));
+		delete_action_data(&(current->action));
 		free(current, M_USERFW);
 		current = next;
 	}
 }
 
-userfw_action
+int
 check_packet(struct mbuf **mb, int global, userfw_chk_args *args, userfw_ruleset *ruleset)
 {
 	userfw_rule *rule = ruleset->rule;
-	struct match_cache cache;
-	userfw_action ret;
-	struct ip *ip = mtod(*mb, struct ip *);
-	struct mbuf *m = *mb;
+	userfw_cache cache;
+	int ret, matched = 0;
 
-	bzero(&cache, sizeof(struct match_cache));
-
-	if ((ntohs(ip->ip_off) & IP_OFFMASK) != 0)
-	{
-		/* pass fragments untouched for now */
-		ret.type = A_ALLOW;
-		return ret;
-	}
-
-	switch(ip->ip_p)
-	{
-	case IPPROTO_TCP:
-		m = m_pullup(*mb, sizeof(struct tcphdr));
-		cache.ports_found = 1;
-		cache.src_port = mtod(m, struct tcphdr *)->th_sport;
-		cache.dst_port = mtod(m, struct tcphdr *)->th_dport;
-		break;
-	case IPPROTO_UDP:
-		m = m_pullup(*mb, sizeof(struct udphdr));
-		cache.ports_found = 1;
-		cache.src_port = mtod(m, struct udphdr *)->uh_sport;
-		cache.dst_port = mtod(m, struct udphdr *)->uh_dport;
-		break;
-	case IPPROTO_SCTP:
-		m = m_pullup(*mb, sizeof(struct sctphdr));
-		cache.ports_found = 1;
-		cache.src_port = mtod(m, struct sctphdr *)->src_port;
-		cache.dst_port = mtod(m, struct sctphdr *)->dest_port;
-		break;
-	}
-	
-	if (m == NULL)
-	{
-		printf("userfw: pullup failed\n");
-		ret.type = A_DENY;
-		return ret;
-	}
-	*mb = m;
+	userfw_cache_init(&cache);
 
 	USERFW_RLOCK(ruleset);
 
 	while(rule != NULL)
 	{
-		if (match_packet(mb, args, &(rule->match), &cache))
+		if (rule->match.do_match(mb, args, &(rule->match), &cache))
 		{
-			ret = rule->action;
+			ret = rule->action.do_action(mb, args, &(rule->action), &cache);
+			matched = 1;
 			break;
 		}
 		rule = rule->next;
@@ -195,48 +134,14 @@ check_packet(struct mbuf **mb, int global, userfw_chk_args *args, userfw_ruleset
 
 	USERFW_RUNLOCK(ruleset);
 
+	if (!matched)
+#ifdef USERFW_DEFAULT_TO_DENY
+		ret = EACCES;
+#else
+		ret = 0;
+#endif
+
+	userfw_cache_cleanup(&cache);
+
 	return ret;
-}
-
-int
-match_packet(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, struct match_cache *cache)
-{
-	int i;
-	struct mbuf *m = *mb;
-
-	switch(match->type)
-	{
-	case M_ANY:
-		return 1;
-	case M_OR:
-		for(i = 0; i < match->LogicBlock.count; i++)
-		{
-			if (match_packet(mb, args, &(match->LogicBlock.rules[i]), cache))
-				return 1;
-		}
-		return 0;
-	case M_AND:
-		for(i = 0; i < match->LogicBlock.count; i++)
-		{
-			if (!match_packet(mb, args, &(match->LogicBlock.rules[i]), cache))
-				return 0;
-		}
-		return 1;
-	case M_NOT:
-		return !match_packet(mb, args, match->NotBlock.rule, cache);
-	case M_SRCIPV4:
-		return (mtod(m, struct ip *))->ip_src.s_addr == match->MatchIPv4Addr.addr;
-	case M_DSTIPV4:
-		return (mtod(m, struct ip *))->ip_dst.s_addr == match->MatchIPv4Addr.addr;
-	case M_SRCPORT:
-		return cache->ports_found && match->MatchPort.port == cache->src_port;
-	case M_DSTPORT:
-		return cache->ports_found && match->MatchPort.port == cache->dst_port;
-	case M_IN:
-		return args->dir == USERFW_IN;
-	case M_OUT:
-		return args->dir == USERFW_OUT;
-	}
-	
-	return 0;
 }

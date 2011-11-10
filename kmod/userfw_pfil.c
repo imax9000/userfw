@@ -25,35 +25,14 @@ userfw_pfil_unregister(void)
 int
 userfw_pfil_hook(void *arg, struct mbuf **mb, struct ifnet *ifp, int dir, struct inpcb *pcb)
 {
-	int ret = 0; /* default to pass */
 	userfw_chk_args args;
-	userfw_action action;
 	
 	args.af = (int)arg;
 	args.ifp = ifp;
 	args.dir = (dir == PFIL_IN) ? USERFW_IN : USERFW_OUT; /* looks ugly */
 	args.inpcb = pcb;
 
-	action = userfw_chk(mb, &args);
-
-	switch (action.type)
-	{
-	case A_ALLOW:
-		ret = 0;
-		break;
-	case A_DENY:
-		ret = EACCES;
-		break;
-	case A_ASK:
-		ret = 0;
-		printf("userfw: A_ASK not implemented yet.\n");
-		break;
-	default:
-		printf("userfw: userfw_chk returned unknown action type: %d\n", action.type);
-		break;
-	}
-
-	return ret;
+	return userfw_chk(mb, &args);
 }
 
 int

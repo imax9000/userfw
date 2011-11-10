@@ -1,24 +1,25 @@
 #ifndef USERFW_H
 #define USERFW_H
 
-#include "userfw_rules_priv.h"
-#include <userfw/rules.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/mbuf.h>
 #include <net/if.h>
 #include <sys/lock.h>
 #include <sys/rwlock.h>
+#include <userfw/types.h>
+#include <userfw/module.h>
 
 MALLOC_DECLARE(M_USERFW);
 
-typedef struct __userfw_chk_args
+typedef struct __userfw_rule
 {
-	int	af;
-	struct ifnet	*ifp;
-	int	dir;
-	struct inpcb	*inpcb;
-} userfw_chk_args;
+	struct __userfw_rule *next;
+
+	uint16_t	number;
+	userfw_action	action;
+	userfw_match	match;
+} userfw_rule;
 
 typedef struct __userfw_ruleset
 {
@@ -38,6 +39,6 @@ extern userfw_ruleset global_rules;
 int userfw_init(void);
 int userfw_uninit(void);
 
-userfw_action userfw_chk(struct mbuf **, userfw_chk_args *);
+int userfw_chk(struct mbuf **, userfw_chk_args *);
 
 #endif /* USERFW_H */
