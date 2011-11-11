@@ -1,6 +1,7 @@
 #include "userfw.h"
 #include "userfw_dev.h"
 #include "userfw_pfil.h"
+#include "userfw_module.h"
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -25,6 +26,9 @@ int userfw_init()
 {
 	int err = 0;
 
+	SLIST_INIT(&userfw_modules_list);
+	rw_init(&userfw_modules_lsit_mtx, "userfw modules list lock");
+
 	err = userfw_dev_register();
 
 	init_ruleset(&global_rules);
@@ -40,6 +44,8 @@ int userfw_init()
 int userfw_uninit()
 {
 	int err = 0;
+
+	rw_destroy(&userfw_modules_list_mtx);
 
 	err = userfw_pfil_unregister();
 

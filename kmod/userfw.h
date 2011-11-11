@@ -6,6 +6,7 @@
 #include <sys/mbuf.h>
 #include <net/if.h>
 #include <sys/lock.h>
+#include <sys/queue.h>
 #include <sys/rwlock.h>
 #include <userfw/types.h>
 #include <userfw/module.h>
