@@ -27,7 +27,7 @@ int userfw_init()
 	int err = 0;
 
 	SLIST_INIT(&userfw_modules_list);
-	rw_init(&userfw_modules_lsit_mtx, "userfw modules list lock");
+	rw_init(&userfw_modules_list_mtx, "userfw modules list lock");
 
 	err = userfw_dev_register();
 
@@ -92,16 +92,20 @@ delete_match_data(userfw_match *match)
 }
 
 void
-delete_action_data(userfw_action *match)
+delete_action_data(userfw_action *action)
 {
 	int i;
 
-	for(i = 0; i < match->nargs; i++)
+	for(i = 0; i < action->nargs; i++)
 	{
-		switch (match->args[i].type)
+		switch (action->args[i].type)
 		{
 		case T_STRING:
-			free(match->args[i].string.data, M_USERFW);
+			free(action->args[i].string.data, M_USERFW);
+			break;
+		case T_MATCH:
+			delete_match_data(action->args[i].match.p);
+			free(action->args[i].match.p, M_USERFW);
 			break;
 		}
 	}
