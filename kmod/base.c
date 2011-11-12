@@ -6,6 +6,9 @@
 #include <userfw/module.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
+#include <netinet/sctp.h>
 #include <sys/mbuf.h>
 
 enum __base_actions
@@ -37,6 +40,8 @@ enum __base_matches
 	,M_OUT = USERFW_OUT
 	,M_SRCIPV4
 	,M_DSTIPV4
+	,M_SRCPORT
+	,M_DSTPORT
 };
 
 static int
@@ -75,18 +80,106 @@ match_ipv4(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_
 	return 0;
 }
 
+static int
+match_port(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache)
+{
+	struct mbuf	*m = *mb;
+	uint16_t	val = 0;
+	struct ip	*ip = mtod(m, struct ip *);
+	struct tcphdr	*tcp;
+	struct udphdr	*udp;
+	struct sctphdr	*sctp;
+	int	ip_header_len = (ip->ip_hl) << 2;
+
+	switch (ip->ip_p)
+	{
+	case IPPROTO_TCP:
+		(*mb) = m = m_pullup(m, ip_header_len + sizeof(struct tcphdr));
+		if (m != NULL)
+		{
+			tcp = (struct tcphdr *)(mtod(m, uint8_t *) + ip_header_len);
+			switch (match->op)
+			{
+			case M_SRCPORT:
+				val = tcp->th_sport;
+				break;
+			case M_DSTPORT:
+				val = tcp->th_dport;
+				break;
+			}
+		}
+		else
+		{
+			printf("userfw_base: TCP header pullup failed\n");
+			return 0;
+		}
+		break;
+	case IPPROTO_UDP:
+		(*mb) = m = m_pullup(m, ip_header_len + sizeof(struct udphdr));
+		if (m != NULL)
+		{
+			udp = (struct udphdr *)(mtod(m, uint8_t *) + ip_header_len);
+			switch (match->op)
+			{
+			case M_SRCPORT:
+				val = udp->uh_sport;
+				break;
+			case M_DSTPORT:
+				val = udp->uh_dport;
+				break;
+			}
+		}
+		else
+		{
+			printf("userfw_base: UDP header pullup failed\n");
+			return 0;
+		}
+		break;
+	case IPPROTO_SCTP:
+		(*mb) = m = m_pullup(m, ip_header_len + sizeof(struct sctphdr));
+		if (m != NULL)
+		{
+			sctp = (struct sctphdr *)(mtod(m, uint8_t *) + ip_header_len);
+			switch (match->op)
+			{
+			case M_SRCPORT:
+				val = sctp->src_port;
+				break;
+			case M_DSTPORT:
+				val = sctp->dest_port;
+				break;
+			}
+		}
+		else
+		{
+			printf("userfw_base: SCTP header pullup failed\n");
+			return 0;
+		}
+		break;
+	default:
+		return 0;
+	}
+
+	if (val == match->args[0].uint16.value)
+		return 1;
+	else
+		return 0;
+};
+
 static userfw_match_descr base_matches[] = {
 	{M_IN,	0,	0,	{},	"in",	match_direction}
 	,{M_OUT,	0,	0,	{},	"out",	match_direction}
 	,{M_SRCIPV4,	1,	0,	{T_IPv4},	"src-ip",	match_ipv4}
-	,{M_DSTIPV4,	1,	0,	{T_IPv4},	"src-ip",	match_ipv4}
+	,{M_DSTIPV4,	1,	0,	{T_IPv4},	"dst-ip",	match_ipv4}
+	,{M_SRCPORT,	1,	0,	{T_UINT16},	"src-port",	match_port}
+	,{M_DSTPORT,	1,	0,	{T_UINT16},	"dst-port",	match_port}
 };
 
 static userfw_modinfo base_modinfo =
 {
 	USERFW_BASE_MOD,
 	2,	/* nactions */
-	4,	/* nmatches */
+	6,	/* nmatches */
 	base_actions,
 	base_matches,
 	"base"
