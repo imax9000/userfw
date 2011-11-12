@@ -32,4 +32,6 @@ static moduledata_t userfw_mod = {
 	0
 };
 
+MODULE_VERSION(userfw, 1);
+
 DECLARE_MODULE(userfw, userfw_mod, SI_SUB_USERFW, SI_ORDER_USERFW_CORE);
