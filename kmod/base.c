@@ -44,6 +44,7 @@ enum __base_matches
 	,M_DSTPORT
 	,M_OR
 	,M_AND
+	,M_NOT
 };
 
 static int
@@ -215,6 +216,24 @@ match_logic(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw
 	return match2->do_match(mb, args, match2, cache);
 }
 
+static int
+match_invert(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache)
+{
+	userfw_match	*match1;
+
+	if (match->mod != USERFW_BASE_MOD || match->op != M_NOT)
+	{
+		printf("userfw_base: match_invert: called with wrong opcode %d:%d\n", match->mod, match->op);
+		return 0;
+	}
+
+	match1 = match->args[0].match.p;
+	if (match1->do_match(mb, args, match1, cache))
+		return 0;
+	else
+		return 1;
+}
+
 static userfw_match_descr base_matches[] = {
 	{M_IN,	0,	0,	{},	"in",	match_direction}
 	,{M_OUT,	0,	0,	{},	"out",	match_direction}
@@ -224,13 +243,14 @@ static userfw_match_descr base_matches[] = {
 	,{M_DSTPORT,	1,	0,	{T_UINT16},	"dst-port",	match_port}
 	,{M_OR,	2,	0,	{T_MATCH, T_MATCH},	"or",	match_logic}
 	,{M_AND,	2,	0,	{T_MATCH, T_MATCH}, "and",	match_logic}
+	,{M_NOT,	1,	0,	{T_MATCH},	"not",	match_invert}
 };
 
 static userfw_modinfo base_modinfo =
 {
 	USERFW_BASE_MOD,
 	2,	/* nactions */
-	8,	/* nmatches */
+	9,	/* nmatches */
 	base_actions,
 	base_matches,
 	"base"
