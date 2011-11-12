@@ -58,6 +58,7 @@ userfw_mod_unregister(userfw_module_id_t id)
 		if (m != NULL && m->data->id == id)
 		{
 			SLIST_REMOVE_HEAD(&userfw_modules_list, entries);
+			free(m, M_USERFW);
 		}
 		else
 		{
