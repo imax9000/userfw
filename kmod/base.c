@@ -49,6 +49,12 @@ enum __base_matches
 static int
 match_direction(struct mbuf **mb, userfw_chk_args *args, userfw_match *m, userfw_cache *cache)
 {
+	if (m->mod != USERFW_BASE_MOD || (m->op != M_IN && m->op != M_OUT))
+	{
+		printf("userfw_base: match_direction: called with wrong opcode %d:%d\n", m->mod, m->op);
+		return 0;
+	}
+
 	if (args->dir == m->op)
 		return 1;
 	else
@@ -58,9 +64,15 @@ match_direction(struct mbuf **mb, userfw_chk_args *args, userfw_match *m, userfw
 static int
 match_ipv4(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache)
 {
-	struct mbuf *m = *mb;
+	struct mbuf	*m = *mb;
 	uint32_t	val = 0;
-	struct ip *ip = mtod(m, struct ip *);
+	struct ip	*ip = mtod(m, struct ip *);
+
+	if (match->mod != USERFW_BASE_MOD || (match->op != M_SRCIPV4 && match->op != M_DSTIPV4))
+	{
+		printf("userfw_base: match_ipv4: called with wrong opcode %d:%d\n", match->mod, match->op);
+		return 0;
+	}
 
 	if (ip->ip_v != 4)
 		return 0;
@@ -92,6 +104,12 @@ match_port(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_
 	struct udphdr	*udp;
 	struct sctphdr	*sctp;
 	int	ip_header_len = (ip->ip_hl) << 2;
+
+	if (match->mod != USERFW_BASE_MOD || (match->op != M_SRCPORT && match->op != M_DSTPORT))
+	{
+		printf("userfw_base: match_port: called with wrong opcode %d:%d\n", match->mod, match->op);
+		return 0;
+	}
 
 	switch (ip->ip_p)
 	{
@@ -171,9 +189,19 @@ match_port(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_
 static int
 match_logic(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache)
 {
-	userfw_match	*match1 = match->args[0].match.p;
-	userfw_match	*match2 = match->args[1].match.p;
-	int	ret1 = match1->do_match(mb, args, match1, cache);
+	userfw_match	*match1, *match2;
+	int	ret1;
+
+	if (match->mod != USERFW_BASE_MOD || (match->op != M_OR && match->op != M_AND))
+	{
+		printf("userfw_base: match_logic: called with wrong opcode %d:%d\n", match->mod, match->op);
+		return 0;
+	}
+
+	match1 = match->args[0].match.p;
+	match2 = match->args[1].match.p;
+
+	ret1 = match1->do_match(mb, args, match1, cache);
 
 	if ((*mb) == NULL)
 		return 0;
