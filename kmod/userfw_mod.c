@@ -27,11 +27,11 @@ userfw_modevent(module_t mod, int type, void *p)
 }
 
 static moduledata_t userfw_mod = {
-	"userfw",
+	"userfw_core",
 	userfw_modevent,
 	0
 };
 
-MODULE_VERSION(userfw, 1);
+MODULE_VERSION(userfw_core, 1);
 
-DECLARE_MODULE(userfw, userfw_mod, SI_SUB_USERFW, SI_ORDER_USERFW_CORE);
+DECLARE_MODULE(userfw_core, userfw_mod, SI_SUB_USERFW, SI_ORDER_USERFW_CORE);
