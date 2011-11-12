@@ -4,6 +4,15 @@
 #include <sys/kernel.h>
 #include "base.h"
 #include <userfw/module.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <sys/mbuf.h>
+
+enum __base_actions
+{
+	A_ALLOW
+	,A_DENY
+};
 
 static int
 action_allow(struct mbuf **mb, userfw_chk_args *args, userfw_action *a, userfw_cache *cache)
@@ -17,18 +26,6 @@ action_deny(struct mbuf **mb, userfw_chk_args *args, userfw_action *a, userfw_ca
 	return EACCES;
 }
 
-static int
-match_direction(struct mbuf **mb, userfw_chk_args *args, userfw_match *m, userfw_cache *cache)
-{
-	return args->dir == m->op;
-}
-
-enum __base_actions
-{
-	A_ALLOW
-	,A_DENY
-};
-
 static userfw_action_descr base_actions[] = {
 	{A_ALLOW,	0,	0,	{},	"allow",	action_allow}
 	,{A_DENY,	0,	0,	{},	"deny",	action_deny}
@@ -38,18 +35,55 @@ enum __base_matches
 {
 	M_IN = USERFW_IN
 	,M_OUT = USERFW_OUT
+	,M_SRCIPV4
+	,M_DSTIPV4
 };
+
+static int
+match_direction(struct mbuf **mb, userfw_chk_args *args, userfw_match *m, userfw_cache *cache)
+{
+	return args->dir == m->op;
+}
+
+static int
+match_ipv4(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache)
+{
+	struct mbuf *m = *mb;
+	uint32_t	val = 0;
+	struct ip *ip = mtod(m, struct ip *);
+
+	if (ip->ip_v != 4)
+		return 0;
+
+	switch (match->op)
+	{
+	case M_SRCIPV4:
+		val = ip->ip_src.s_addr;
+		break;
+	case M_DSTIPV4:
+		val = ip->ip_dst.s_addr;
+		break;
+	}
+
+	if ((val & match->args[0].ipv4.mask) ==
+		(match->args[0].ipv4.addr & match->args[0].ipv4.mask))
+		return 1;
+
+	return 0;
+}
 
 static userfw_match_descr base_matches[] = {
 	{M_IN,	0,	0,	{},	"in",	match_direction}
 	,{M_OUT,	0,	0,	{},	"out",	match_direction}
+	,{M_SRCIPV4,	1,	0,	{T_IPv4},	"src-ip",	match_ipv4}
+	,{M_DSTIPV4,	1,	0,	{T_IPv4},	"src-ip",	match_ipv4}
 };
 
 static userfw_modinfo base_modinfo =
 {
 	USERFW_BASE_MOD,
 	2,	/* nactions */
-	2,	/* nmatches */
+	4,	/* nmatches */
 	base_actions,
 	base_matches,
 	"base"
