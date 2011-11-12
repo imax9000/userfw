@@ -65,7 +65,6 @@ userfw_base_modevent(module_t mod, int type, void *p)
 	case MOD_LOAD:
 		err = userfw_mod_register(&base_modinfo);
 		break;
-	case MOD_QUIESCE:
 	case MOD_UNLOAD:
 		err = userfw_mod_unregister(USERFW_BASE_MOD);
 		break;
