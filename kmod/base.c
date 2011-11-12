@@ -42,6 +42,8 @@ enum __base_matches
 	,M_DSTIPV4
 	,M_SRCPORT
 	,M_DSTPORT
+	,M_OR
+	,M_AND
 };
 
 static int
@@ -166,6 +168,25 @@ match_port(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_
 		return 0;
 };
 
+static int
+match_logic(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache)
+{
+	userfw_match	*match1 = match->args[0].match.p;
+	userfw_match	*match2 = match->args[1].match.p;
+	int	ret1 = match1->do_match(mb, args, match1, cache);
+
+	if ((*mb) == NULL)
+		return 0;
+
+	if (ret1 == 0 && match->op == M_AND)
+		return 0;
+
+	if (ret1 != 0 && match->op == M_OR)
+		return ret1;
+
+	return match2->do_match(mb, args, match2, cache);
+}
+
 static userfw_match_descr base_matches[] = {
 	{M_IN,	0,	0,	{},	"in",	match_direction}
 	,{M_OUT,	0,	0,	{},	"out",	match_direction}
@@ -173,13 +194,15 @@ static userfw_match_descr base_matches[] = {
 	,{M_DSTIPV4,	1,	0,	{T_IPv4},	"dst-ip",	match_ipv4}
 	,{M_SRCPORT,	1,	0,	{T_UINT16},	"src-port",	match_port}
 	,{M_DSTPORT,	1,	0,	{T_UINT16},	"dst-port",	match_port}
+	,{M_OR,	2,	0,	{T_MATCH, T_MATCH},	"or",	match_logic}
+	,{M_AND,	2,	0,	{T_MATCH, T_MATCH}, "and",	match_logic}
 };
 
 static userfw_modinfo base_modinfo =
 {
 	USERFW_BASE_MOD,
 	2,	/* nactions */
-	6,	/* nmatches */
+	8,	/* nmatches */
 	base_actions,
 	base_matches,
 	"base"
