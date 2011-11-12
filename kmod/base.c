@@ -42,7 +42,10 @@ enum __base_matches
 static int
 match_direction(struct mbuf **mb, userfw_chk_args *args, userfw_match *m, userfw_cache *cache)
 {
-	return args->dir == m->op;
+	if (args->dir == m->op)
+		return 1;
+	else
+		return 0;
 }
 
 static int
