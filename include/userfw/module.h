@@ -3,11 +3,17 @@
 
 #include <userfw/types.h>
 #include <userfw/cache.h>
+#include <sys/param.h>
+#include <sys/kernel.h>
 
 struct mbuf;
 
 #define	USERFW_ARGS_MAX	8
 #define	USERFW_NAME_LEN	16
+
+#define SI_SUB_USERFW	SI_SUB_PROTO_IFATTACHDOMAIN
+#define SI_ORDER_USERFW_CORE	(SI_ORDER_ANY-1)
+#define SI_ORDER_USERFW_MOD	(SI_ORDER_USERFW_CORE+1)
 
 typedef struct __userfw_chk_args
 {

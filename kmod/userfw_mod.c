@@ -32,4 +32,4 @@ static moduledata_t userfw_mod = {
 	0
 };
 
-DECLARE_MODULE(userfw, userfw_mod, SI_SUB_PROTO_IFATTACHDOMAIN, SI_ORDER_ANY);
+DECLARE_MODULE(userfw, userfw_mod, SI_SUB_USERFW, SI_ORDER_USERFW_CORE);
