@@ -141,10 +141,14 @@ check_packet(struct mbuf **mb, int global, userfw_chk_args *args, userfw_ruleset
 	{
 		if (rule->match.do_match(mb, args, &(rule->match), &cache))
 		{
+			if ((*mb) == NULL)
+				return EACCES;
 			ret = rule->action.do_action(mb, args, &(rule->action), &cache);
 			matched = 1;
 			break;
 		}
+		if ((*mb) == NULL)
+			return EACCES;
 		rule = rule->next;
 	}
 
