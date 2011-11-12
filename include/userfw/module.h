@@ -106,8 +106,8 @@ typedef struct __userfw_modinfo
 	userfw_module_id_t	id;
 	uint16_t	nactions;
 	uint16_t	nmatches;
-	userfw_action	*actions;
-	userfw_match	*matches;
+	userfw_action_descr	*actions;
+	userfw_match_descr	*matches;
 	char	name[USERFW_NAME_LEN];
 } userfw_modinfo;
 
