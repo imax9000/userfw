@@ -65,7 +65,6 @@ typedef struct __userfw_match_descr
 {
 	opcode_t	opcode;
 	uint8_t	nargs;
-	uint8_t	_pad1; /* padding */
 	uint8_t	arg_types[USERFW_ARGS_MAX];
 	char	name[USERFW_NAME_LEN];
 	userfw_match_fn	do_match;
@@ -75,7 +74,6 @@ typedef struct __userfw_action_descr
 {
 	opcode_t	opcode;
 	uint8_t	nargs;
-	uint8_t	_pad1; /* padding */
 	uint8_t	arg_types[USERFW_ARGS_MAX];
 	char	name[USERFW_NAME_LEN];
 	userfw_action_fn	do_action;
@@ -86,7 +84,6 @@ struct __userfw_match
 	userfw_module_id_t	mod;
 	opcode_t	op;
 	uint8_t	nargs;
-	uint8_t	_pad1; /* padding */
 	userfw_match_fn	do_match;
 	userfw_arg	args[USERFW_ARGS_MAX];
 };
@@ -96,7 +93,6 @@ struct __userfw_action
 	userfw_module_id_t	mod;
 	opcode_t	op;
 	uint8_t	nargs;
-	uint8_t	_pad1; /* padding */
 	userfw_action_fn	do_action;
 	userfw_arg	args[USERFW_ARGS_MAX];
 };

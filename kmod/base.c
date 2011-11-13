@@ -30,8 +30,8 @@ action_deny(struct mbuf **mb, userfw_chk_args *args, userfw_action *a, userfw_ca
 }
 
 static userfw_action_descr base_actions[] = {
-	{A_ALLOW,	0,	0,	{},	"allow",	action_allow}
-	,{A_DENY,	0,	0,	{},	"deny",	action_deny}
+	{A_ALLOW,	0,	{},	"allow",	action_allow}
+	,{A_DENY,	0,	{},	"deny",	action_deny}
 };
 
 enum __base_matches
@@ -235,15 +235,15 @@ match_invert(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userf
 }
 
 static userfw_match_descr base_matches[] = {
-	{M_IN,	0,	0,	{},	"in",	match_direction}
-	,{M_OUT,	0,	0,	{},	"out",	match_direction}
-	,{M_SRCIPV4,	1,	0,	{T_IPv4},	"src-ip",	match_ipv4}
-	,{M_DSTIPV4,	1,	0,	{T_IPv4},	"dst-ip",	match_ipv4}
-	,{M_SRCPORT,	1,	0,	{T_UINT16},	"src-port",	match_port}
-	,{M_DSTPORT,	1,	0,	{T_UINT16},	"dst-port",	match_port}
-	,{M_OR,	2,	0,	{T_MATCH, T_MATCH},	"or",	match_logic}
-	,{M_AND,	2,	0,	{T_MATCH, T_MATCH}, "and",	match_logic}
-	,{M_NOT,	1,	0,	{T_MATCH},	"not",	match_invert}
+	{M_IN,	0,	{},	"in",	match_direction}
+	,{M_OUT,	0,	{},	"out",	match_direction}
+	,{M_SRCIPV4,	1,	{T_IPv4},	"src-ip",	match_ipv4}
+	,{M_DSTIPV4,	1,	{T_IPv4},	"dst-ip",	match_ipv4}
+	,{M_SRCPORT,	1,	{T_UINT16},	"src-port",	match_port}
+	,{M_DSTPORT,	1,	{T_UINT16},	"dst-port",	match_port}
+	,{M_OR,	2,	{T_MATCH, T_MATCH},	"or",	match_logic}
+	,{M_AND,	2,	{T_MATCH, T_MATCH}, "and",	match_logic}
+	,{M_NOT,	1,	{T_MATCH},	"not",	match_invert}
 };
 
 static userfw_modinfo base_modinfo =
