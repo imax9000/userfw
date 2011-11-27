@@ -4,3 +4,4 @@
 export_syms
 @
 machine
+*.swp
