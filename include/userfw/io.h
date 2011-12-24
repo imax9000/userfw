@@ -31,6 +31,8 @@
 #include <sys/ioccom.h>
 #include <userfw/module.h>
 
+#define AF_USERFW	145 /* just random unused number */
+
 #define PACKED	__attribute__((packed))
 
 #define USERFW_IO_RULESET	1

@@ -25,51 +25,19 @@
  */
 
 
+#ifndef USERFW_DOMAIN_H
+#define USERFW_DOMAIN_H
+
+#if !defined(SKIP_DOMAIN_STUB) || defined(I_AM_DOMAIN_STUB)
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/module.h>
 #include <sys/kernel.h>
-#include "userfw.h"
-#include "userfw_domain.h"
+#include <sys/protosw.h>
+#include <sys/domain.h>
 
-static int
-userfw_modevent(module_t mod, int type, void *p)
-{
-	int err = 0;
+extern struct pr_usrreqs userfwreqs;
 
-	switch (type)
-	{
-	case MOD_LOAD:
-#ifndef SKIP_DOMAIN_STUB
-		userfw_reg_domain(&userfwreqs);
-#endif
-		err = userfw_init();
-		printf("userfw loaded\n");
-		break;
-	case MOD_UNLOAD:
-		err = userfw_uninit();
-#ifndef SKIP_DOMAIN_STUB
-		userfw_unreg_domain(&userfwreqs);
-#endif
-		printf("userfw unloaded\n");
-		break;
-	default:
-		err = EOPNOTSUPP;
-		break;
-	}
-	return err;
-}
-
-static moduledata_t userfw_mod = {
-	"userfw_core",
-	userfw_modevent,
-	0
-};
-
-MODULE_VERSION(userfw_core, 1);
-
-#ifndef SKIP_DOMAIN_STUB
-MODULE_DEPEND(userfw_core, userfw_domain_stub, 1, 1, 1);
+int userfw_reg_domain(struct pr_usrreqs *reqs);
+int userfw_unreg_domain(struct pr_usrreqs *reqs);
 #endif
 
-DECLARE_MODULE(userfw_core, userfw_mod, SI_SUB_USERFW, SI_ORDER_USERFW_CORE);
+#endif /* USERFW_DOMAIN_H */

@@ -4,6 +4,7 @@ SRCS=	userfw_mod.c \
 	userfw_module.c \
 	userfw_cache.c \
 	userfw_pfil.c \
+	userfw_domain.c \
 	base.c
 KMOD=	userfw
 CFLAGS+=	-I../include
