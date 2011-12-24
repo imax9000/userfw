@@ -30,14 +30,17 @@
 
 #include <userfw/types.h>
 #include <userfw/cache.h>
+#ifdef _KERNEL
 #include <sys/param.h>
 #include <sys/kernel.h>
 
 struct mbuf;
+#endif
 
 #define	USERFW_ARGS_MAX	8
 #define	USERFW_NAME_LEN	16
 
+#ifdef _KERNEL
 #define SI_SUB_USERFW	SI_SUB_PROTO_IFATTACHDOMAIN
 #define SI_ORDER_USERFW_CORE	(SI_ORDER_ANY-1)
 #define SI_ORDER_USERFW_MOD	(SI_ORDER_USERFW_CORE+1)
@@ -136,5 +139,6 @@ typedef struct __userfw_modinfo
 
 int userfw_mod_register(userfw_modinfo *);
 int userfw_mod_unregister(userfw_module_id_t);
+#endif /* _KERNEL */
 
 #endif /* USERFW_MODULE_H */
