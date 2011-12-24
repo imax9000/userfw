@@ -28,7 +28,6 @@
 #ifndef USERFW_IO_H
 #define USERFW_IO_H
 
-#include <sys/ioccom.h>
 #include <userfw/module.h>
 
 #define AF_USERFW	145 /* just random unused number */
@@ -72,15 +71,5 @@ struct userfw_io_match_descr
 	uint8_t	arg_types[USERFW_ARGS_MAX];
 	char	name[USERFW_NAME_LEN];
 } PACKED;
-
-
-/* ioctl interfaces */
-
-#ifdef _KERNEL
-struct ucred;
-typedef int (*userfw_ioctl_handler)(u_long cmd, caddr_t addr, struct ucred *);
-extern int userfw_register_ioctl(u_long cmd, userfw_ioctl_handler fn);
-extern int userfw_unregister_ioctl(u_long cmd);
-#endif
 
 #endif /* USERFW_IO_H */

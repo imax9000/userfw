@@ -30,48 +30,7 @@
 #include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/uio.h>
-#include "userfw.h"
 #include "userfw_dev.h"
-#include <userfw/io.h>
-#include <sys/lock.h>
-#include <sys/rwlock.h>
-#include <sys/queue.h>
-#include <sys/proc.h>
-#include <sys/ucred.h>
-
-struct rwlock ioctl_mtx;
-
-#define	IOCTL_INIT_LOCK	rw_init(&ioctl_mtx, "userfw ioctl list lock")
-#define IOCTL_UNINIT_LOCK rw_destroy(&ioctl_mtx)
-#define IOCTL_RLOCK	rw_rlock(&ioctl_mtx)
-#define IOCTL_RUNLOCK rw_runlock(&ioctl_mtx)
-#define IOCTL_WLOCK	rw_wlock(&ioctl_mtx)
-#define IOCTL_WUNLOCK	rw_wunlock(&ioctl_mtx)
-
-struct ioctl_handler_entry
-{
-	u_long	cmd;
-	userfw_ioctl_handler	fn;
-	SLIST_ENTRY(ioctl_handler_entry) next;
-};
-
-SLIST_HEAD(ioctl_handler_list, ioctl_handler_entry) ioctl_list =
-	SLIST_HEAD_INITIALIZER(ioctl_list);
-
-/* should be used only while holding IOCTL_RLOCK */
-static struct ioctl_handler_entry *
-find_ioctl(u_long cmd)
-{
-	struct ioctl_handler_entry *p;
-
-	SLIST_FOREACH(p, &ioctl_list, next)
-	{
-		if (p != NULL && p->cmd == cmd)
-			return p;
-	}
-
-	return NULL;
-}
 
 static struct cdevsw userfw_cdevsw = {
 	.d_version = D_VERSION,
@@ -89,9 +48,6 @@ int userfw_dev_register(void)
 {
 	int err = 0;
 
-	SLIST_INIT(&ioctl_list);
-	IOCTL_INIT_LOCK;
-
 	userfw_dev = make_dev(&userfw_cdevsw, 0, UID_ROOT, GID_WHEEL, 0666, "userfw");
 
 	if (userfw_dev == NULL)
@@ -107,8 +63,6 @@ int userfw_dev_unregister(void)
 		destroy_dev(userfw_dev);
 		userfw_dev = NULL;
 	}
-
-	IOCTL_UNINIT_LOCK;
 
 	return 0;
 }
@@ -128,27 +82,7 @@ userfw_dev_close(struct cdev *dev, int fflag, int devtype, struct thread *td)
 int
 userfw_dev_ioctl(struct cdev *dev, u_long cmd, caddr_t data, int fflag, struct thread *td)
 {
-	struct ioctl_handler_entry *p;
-	struct ucred *cred;
-	int ret = 0;
-
-	IOCTL_RLOCK;
-
-	if ((p = find_ioctl(cmd)) == NULL)
-		ret = ENOTTY;
-
-	if (ret != 0 && p != NULL)
-	{
-		cred = crhold(td->td_ucred);
-
-		ret = p->fn(cmd, data, cred);
-
-		crfree(cred);
-	}
-
-	IOCTL_RUNLOCK;
-
-	return ret;
+	return 0;
 }
 
 int
@@ -161,50 +95,4 @@ int
 userfw_dev_write(struct cdev *dev, struct uio *uio, int ioflag)
 {
 	return 0;
-}
-
-int
-userfw_register_ioctl(u_long cmd, userfw_ioctl_handler fn)
-{
-	struct ioctl_handler_entry *p;
-	int ret = 0;
-
-	IOCTL_WLOCK;
-
-	if (find_ioctl(cmd) != NULL)
-		ret = EEXIST;
-
-	if (ret == 0)
-	{
-		p = malloc(sizeof(struct ioctl_handler_entry), M_USERFW, M_WAITOK);
-		p->cmd = cmd;
-		p->fn = fn;
-		SLIST_INSERT_HEAD(&ioctl_list, p, next);
-	}
-
-	IOCTL_WUNLOCK;
-
-	return ret;
-}
-
-int
-userfw_unregister_ioctl(u_long cmd)
-{
-	struct ioctl_handler_entry *p;
-	int ret = 0;
-
-	IOCTL_WLOCK;
-
-	if ((p = find_ioctl(cmd)) == NULL)
-		ret =  ENOENT;
-
-	if (ret == 0 && p != NULL)
-	{
-		SLIST_REMOVE(&ioctl_list, p, ioctl_handler_entry, next);
-		free(p, M_USERFW);
-	}
-
-	IOCTL_WUNLOCK;
-
-	return ret;
 }
