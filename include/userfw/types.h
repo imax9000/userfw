@@ -31,7 +31,6 @@
 #include <sys/types.h>
 
 typedef	uint32_t	userfw_module_id_t;
-typedef	uint16_t	userfw_module_t;
 typedef	uint16_t	opcode_t;
 
 enum userfw_direction
