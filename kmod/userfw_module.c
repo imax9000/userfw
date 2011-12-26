@@ -159,3 +159,25 @@ module_used(userfw_module_id_t id)
 
 	return 0;
 }
+
+userfw_modinfo const *
+userfw_mod_find(userfw_module_id_t id)
+{
+	struct modinfo_entry *m;
+	userfw_modinfo const *ret = NULL;
+
+	rw_rlock(&userfw_modules_list_mtx);
+
+	SLIST_FOREACH(m, &userfw_modules_list, entries)
+	{
+		if (m->data->id == id)
+		{
+			ret = (userfw_modinfo const *)(m->data);
+			break;
+		}
+	}
+	
+	rw_runlock(&userfw_modules_list_mtx);
+
+	return ret;
+}
