@@ -89,12 +89,13 @@ userfw_domain_stub_modevent(module_t mod, int type, void *p)
 		UFWDOMAIN_LOCK_INIT;
 		break;
 	case MOD_UNLOAD:
-		if (ufwreqs != NULL)
+		/* if (ufwreqs != NULL)
 			err = EBUSY;
 		else
 		{
 			UFWDOMAIN_LOCK_UNINIT;
-		}
+		} */
+		err = EBUSY;
 		break;
 	default:
 		err = EOPNOTSUPP;
