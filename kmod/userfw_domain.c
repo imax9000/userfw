@@ -163,6 +163,21 @@ userfw_sosend(struct socket *so,
 	return r;
 }
 
+static int
+userfw_connect(struct socket *so,
+		struct sockaddr *nam,
+		struct thread *td)
+{
+	int r = EOPNOTSUPP;
+	
+	UFWDOMAIN_RLOCK;
+	if (ufwreqs != NULL && ufwreqs->pru_connect != NULL)
+		r = ufwreqs->pru_connect(so,nam,td);
+	UFWDOMAIN_RUNLOCK;
+
+	return r;
+}
+
 
 #else /* I_AM_DOMAIN_STUB */
 
@@ -282,12 +297,31 @@ userfw_sosend(struct socket *so,
 	return 0;
 }
 
+static int
+userfw_connect(struct socket *so,
+		struct sockaddr *nam,
+		struct thread *td)
+{
+	struct userfwpcb *pcb = sotopcb(so);
+	struct sockaddr_userfw *addr = (struct sockaddr_userfw *)nam;
+
+	if (pcb == NULL || nam == NULL || nam->sa_family != AF_USERFW)
+		return EINVAL;
+
+	/* TODO: check that module is currently loaded */
+	pcb->module = addr->module;
+
+	return 0;
+}
+
+
 #endif /* I_AM_DOMAIN_STUB */
 
 struct pr_usrreqs userfwreqs = {
 	.pru_attach = userfw_soattach,
 	.pru_detach = userfw_sodetach,
-	.pru_send = userfw_sosend
+	.pru_send = userfw_sosend,
+	.pru_connect = userfw_connect
 };
 
 extern struct domain userfwdomain;
