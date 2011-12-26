@@ -29,6 +29,7 @@
 #include "userfw_dev.h"
 #include "userfw_pfil.h"
 #include "userfw_module.h"
+#include "userfw_domain.h"
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -65,6 +66,9 @@ int userfw_init()
 	if (!err)
 		err = userfw_pfil_register();
 
+	if (!err)
+		err = userfw_domain_init();
+
 	return err;
 }
 
@@ -72,13 +76,19 @@ int userfw_uninit()
 {
 	int err = 0;
 
-	rw_destroy(&userfw_modules_list_mtx);
-
-	err = userfw_pfil_unregister();
-
-	USERFW_UNINIT_LOCK(&global_rules);
+	err = userfw_domain_uninit();
 	
-	delete_ruleset(&global_rules);
+	if (!err)
+		err = userfw_pfil_unregister();
+
+	if (!err)
+	{
+		rw_destroy(&userfw_modules_list_mtx);
+
+		USERFW_UNINIT_LOCK(&global_rules);
+	
+		delete_ruleset(&global_rules);
+	}
 
 	if (!err)
 		err = userfw_dev_unregister();

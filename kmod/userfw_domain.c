@@ -163,10 +163,54 @@ userfw_sosend(struct socket *so,
 
 #else /* I_AM_DOMAIN_STUB */
 
+#include <sys/mutex.h>
+
 struct userfwpcb
 {
+	SLIST_ENTRY(socket_list_entry) next;
 	struct socket *sock;
+	userfw_module_id_t	module;	/* to which module socket is connected */
+	uid_t	uid;
 };
+
+SLIST_HEAD(socket_list, userfwpcb) socket_list_head =
+	SLIST_HEAD_INITIALIZER(socket_list_head);
+
+struct socket_list *so_list = NULL;
+static struct mtx so_list_mtx;
+
+int
+userfw_domain_init()
+{
+	so_list = &socket_list_head;
+	SLIST_INIT(so_list);
+
+	mtx_init(&so_list_mtx);
+
+#ifndef SKIP_DOMAIN_STUB
+	userfw_reg_domain(&userfwreqs);
+#endif
+
+	return 0;
+}
+
+int
+userfw_domain_uninit()
+{
+	if (!SLIST_EMPTY(so_list))
+		return EBUSY;
+
+#ifdef SKIP_DOMAIN_STUB
+	return EBUSY; /* we cannot unregister domain */
+#endif
+#ifndef SKIP_DOMAIN_STUB
+	userfw_unreg_domain(&userfwreqs);
+#endif
+
+	mtx_destroy(&so_list_mtx);
+
+	return 0;
+}
 
 static int
 userfw_soattach(struct socket *so,

@@ -30,7 +30,6 @@
 #include <sys/module.h>
 #include <sys/kernel.h>
 #include "userfw.h"
-#include "userfw_domain.h"
 
 static int
 userfw_modevent(module_t mod, int type, void *p)
@@ -40,17 +39,11 @@ userfw_modevent(module_t mod, int type, void *p)
 	switch (type)
 	{
 	case MOD_LOAD:
-#ifndef SKIP_DOMAIN_STUB
-		userfw_reg_domain(&userfwreqs);
-#endif
 		err = userfw_init();
 		printf("userfw loaded\n");
 		break;
 	case MOD_UNLOAD:
 		err = userfw_uninit();
-#ifndef SKIP_DOMAIN_STUB
-		userfw_unreg_domain(&userfwreqs);
-#endif
 		printf("userfw unloaded\n");
 		break;
 	default:

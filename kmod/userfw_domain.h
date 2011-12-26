@@ -28,16 +28,7 @@
 #ifndef USERFW_DOMAIN_H
 #define USERFW_DOMAIN_H
 
-#if !defined(SKIP_DOMAIN_STUB) || defined(I_AM_DOMAIN_STUB)
-#include <sys/param.h>
-#include <sys/kernel.h>
-#include <sys/protosw.h>
-#include <sys/domain.h>
-
-extern struct pr_usrreqs userfwreqs;
-
-int userfw_reg_domain(struct pr_usrreqs *reqs);
-int userfw_unreg_domain(struct pr_usrreqs *reqs);
-#endif
+int userfw_domain_init();
+int userfw_domain_uninit();
 
 #endif /* USERFW_DOMAIN_H */
