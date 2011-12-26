@@ -34,6 +34,9 @@
 
 #include "userfw_domain.h"
 
+int userfw_reg_domain(struct pr_usrreqs *);
+int userfw_unreg_domain(struct pr_usrreqs *);
+
 #ifdef I_AM_DOMAIN_STUB
 
 #include <sys/lock.h>
@@ -186,8 +189,10 @@ SLIST_HEAD(socket_list, userfwpcb) socket_list_head =
 struct socket_list *so_list = NULL;
 static struct mtx so_list_mtx;
 
+extern struct pr_usrreqs userfwreqs;
+
 int
-userfw_domain_init()
+userfw_domain_init(void)
 {
 	so_list = &socket_list_head;
 	SLIST_INIT(so_list);
@@ -202,7 +207,7 @@ userfw_domain_init()
 }
 
 int
-userfw_domain_uninit()
+userfw_domain_uninit(void)
 {
 	if (!SLIST_EMPTY(so_list))
 		return EBUSY;
