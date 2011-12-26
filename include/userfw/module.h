@@ -35,6 +35,7 @@
 #include <sys/kernel.h>
 
 struct mbuf;
+struct thread;
 #endif
 
 #define	USERFW_ARGS_MAX	8
@@ -90,6 +91,7 @@ typedef union __userfw_arg
 
 typedef int (*userfw_match_fn)(struct mbuf **, userfw_chk_args *, userfw_match *, userfw_cache *);
 typedef int (*userfw_action_fn)(struct mbuf **, userfw_chk_args *, userfw_action *, userfw_cache *);
+typedef int (*userfw_cmd_handler)(unsigned char *, struct thread *);
 
 typedef struct __userfw_match_descr
 {
@@ -108,6 +110,15 @@ typedef struct __userfw_action_descr
 	char	name[USERFW_NAME_LEN];
 	userfw_action_fn	do_action;
 } userfw_action_descr;
+
+typedef struct __userfw_cmd_descr
+{
+	opcode_t	opcode;
+	uint8_t nargs;
+	uint8_t	arg_types[USERFW_ARGS_MAX];
+	char	name[USERFW_NAME_LEN];
+	userfw_cmd_handler	do_cmd;
+} userfw_cmd_descr;
 
 struct __userfw_match
 {
@@ -132,8 +143,10 @@ typedef struct __userfw_modinfo
 	userfw_module_id_t	id;
 	uint16_t	nactions;
 	uint16_t	nmatches;
+	uint16_t	ncmds;
 	userfw_action_descr	*actions;
 	userfw_match_descr	*matches;
+	userfw_cmd_descr	*cmds;
 	char	name[USERFW_NAME_LEN];
 } userfw_modinfo;
 

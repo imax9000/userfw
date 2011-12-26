@@ -275,12 +275,14 @@ static userfw_match_descr base_matches[] = {
 
 static userfw_modinfo base_modinfo =
 {
-	USERFW_BASE_MOD,
-	2,	/* nactions */
-	9,	/* nmatches */
-	base_actions,
-	base_matches,
-	"base"
+	.id = USERFW_BASE_MOD,
+	.nactions = 2,
+	.nmatches = 9,
+	.ncmds = 0,
+	.actions = base_actions,
+	.matches = base_matches,
+	.cmds = NULL,
+	.name = "base"
 };
 
 static int
