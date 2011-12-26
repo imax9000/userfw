@@ -134,7 +134,7 @@ userfw_soattach(struct socket *so,
 	UFWDOMAIN_RUNLOCK;
 
 	return r;
-};
+}
 
 static void
 userfw_sodetach(struct socket *so)
@@ -143,7 +143,7 @@ userfw_sodetach(struct socket *so)
 	if (ufwreqs != NULL && ufwreqs->pru_detach != NULL)
 		ufwreqs->pru_detach(so);
 	UFWDOMAIN_RUNLOCK;
-};
+}
 
 static int
 userfw_sosend(struct socket *so,
@@ -161,7 +161,7 @@ userfw_sosend(struct socket *so,
 	UFWDOMAIN_RUNLOCK;
 
 	return r;
-};
+}
 
 
 #else /* I_AM_DOMAIN_STUB */
@@ -254,7 +254,7 @@ userfw_soattach(struct socket *so,
 	mtx_unlock(&so_list_mtx);
 
 	return 0;
-};
+}
 
 static void
 userfw_sodetach(struct socket *so)
@@ -269,7 +269,7 @@ userfw_sodetach(struct socket *so)
 
 	/* destroy pcb */
 	free(pcb, M_PCB);
-};
+}
 
 static int
 userfw_sosend(struct socket *so,
@@ -280,7 +280,7 @@ userfw_sosend(struct socket *so,
 		struct thread *td)
 {
 	return 0;
-};
+}
 
 #endif /* I_AM_DOMAIN_STUB */
 
