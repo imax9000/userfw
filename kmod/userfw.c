@@ -57,7 +57,9 @@ int userfw_init()
 	SLIST_INIT(&userfw_modules_list);
 	rw_init(&userfw_modules_list_mtx, "userfw modules list lock");
 
+#if 0
 	err = userfw_dev_register();
+#endif
 
 	init_ruleset(&global_rules);
 
@@ -90,8 +92,10 @@ int userfw_uninit()
 		delete_ruleset(&global_rules);
 	}
 
+#if 0
 	if (!err)
 		err = userfw_dev_unregister();
+#endif
 
 	return err;
 }
