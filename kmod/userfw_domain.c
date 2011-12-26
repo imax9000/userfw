@@ -163,6 +163,7 @@ userfw_sosend(struct socket *so,
 
 #else /* I_AM_DOMAIN_STUB */
 
+#include <sys/lock.h>
 #include <sys/mutex.h>
 
 struct userfwpcb
@@ -191,7 +192,7 @@ userfw_domain_init()
 	so_list = &socket_list_head;
 	SLIST_INIT(so_list);
 
-	mtx_init(&so_list_mtx);
+	mtx_init(&so_list_mtx, "userfw socket list", NULL, MTX_DEF);
 
 #ifndef SKIP_DOMAIN_STUB
 	userfw_reg_domain(&userfwreqs);
