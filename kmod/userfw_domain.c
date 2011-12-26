@@ -185,6 +185,8 @@ userfw_connect(struct socket *so,
 #include <sys/socketvar.h>
 #include <sys/lock.h>
 #include <sys/mutex.h>
+#include <sys/ucred.h>
+#include <sys/proc.h>
 
 struct userfwpcb
 {
@@ -248,6 +250,7 @@ userfw_soattach(struct socket *so,
 {
 	struct userfwpcb *pcb = sotopcb(so);
 	int err = 0;
+	struct ucred *cred;
 
 	if (pcb != NULL)
 		return EISCONN;
@@ -260,7 +263,9 @@ userfw_soattach(struct socket *so,
 	/* Allocate pcb */
 	pcb = malloc(sizeof(struct userfwpcb), M_PCB, M_WAITOK | M_ZERO);
 	pcb->sock = so;
-	pcb->uid = 0; /* TODO */
+	cred = crhold(td->td_ucred);
+	pcb->uid = cred->cr_uid;
+	crfree(cred);
 	so->so_pcb = (caddr_t)pcb;
 
 	/* Add socket to list */
