@@ -33,6 +33,7 @@
 #include <sys/domain.h>
 
 #include "userfw_domain.h"
+#include "userfw_module.h"
 
 int userfw_reg_domain(struct pr_usrreqs *);
 int userfw_unreg_domain(struct pr_usrreqs *);
@@ -313,7 +314,10 @@ userfw_connect(struct socket *so,
 	if (pcb == NULL || nam == NULL || nam->sa_family != AF_USERFW)
 		return EINVAL;
 
-	/* TODO: check that module is currently loaded */
+	if (userfw_mod_find(addr->module) == NULL)
+	{
+		return ECONNREFUSED;
+	}
 	pcb->module = addr->module;
 
 	return 0;
