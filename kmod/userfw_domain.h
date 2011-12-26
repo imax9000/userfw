@@ -28,7 +28,7 @@
 #ifndef USERFW_DOMAIN_H
 #define USERFW_DOMAIN_H
 
-int userfw_domain_init();
-int userfw_domain_uninit();
+int userfw_domain_init(void);
+int userfw_domain_uninit(void);
 
 #endif /* USERFW_DOMAIN_H */
