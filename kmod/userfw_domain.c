@@ -166,12 +166,14 @@ userfw_sosend(struct socket *so,
 
 #else /* I_AM_DOMAIN_STUB */
 
+#include <sys/malloc.h>
+#include <sys/socketvar.h>
 #include <sys/lock.h>
 #include <sys/mutex.h>
 
 struct userfwpcb
 {
-	SLIST_ENTRY(socket_list_entry) next;
+	SLIST_ENTRY(userfwpcb) next;
 	struct socket *sock;
 	userfw_module_id_t	module;	/* to which module socket is connected */
 	uid_t	uid;
@@ -231,7 +233,6 @@ userfw_soattach(struct socket *so,
 {
 	struct userfwpcb *pcb = sotopcb(so);
 	int err = 0;
-	struct socket_list_entry *so_list_entry = NULL;
 
 	if (pcb != NULL)
 		return EISCONN;
