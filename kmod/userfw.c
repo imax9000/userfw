@@ -128,6 +128,10 @@ delete_match_data(userfw_match *match)
 			delete_match_data(match->args[i].match.p);
 			free(match->args[i].match.p, M_USERFW);
 			break;
+		case T_ACTION:
+			delete_action_data(match->args[i].action.p);
+			free(match->args[i].match.p, M_USERFW);
+			break;
 		}
 	}
 }
@@ -146,6 +150,10 @@ delete_action_data(userfw_action *action)
 			break;
 		case T_MATCH:
 			delete_match_data(action->args[i].match.p);
+			free(action->args[i].match.p, M_USERFW);
+			break;
+		case T_ACTION:
+			delete_action_data(action->args[i].action.p);
 			free(action->args[i].match.p, M_USERFW);
 			break;
 		}

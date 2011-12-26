@@ -87,6 +87,11 @@ typedef union __userfw_arg
 		uint8_t type;
 		userfw_match *p;
 	} match;
+	struct
+	{
+		uint8_t type;
+		userfw_action *p;
+	} action;
 } userfw_arg;
 
 typedef int (*userfw_match_fn)(struct mbuf **, userfw_chk_args *, userfw_match *, userfw_cache *);

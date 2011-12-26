@@ -34,6 +34,7 @@ struct rwlock userfw_modules_list_mtx;
 
 int module_used(userfw_module_id_t);
 int module_used_in_match(userfw_match *, userfw_module_id_t);
+int module_used_in_action(userfw_action *, userfw_module_id_t);
 
 int
 userfw_mod_register(userfw_modinfo * mod)
@@ -119,7 +120,7 @@ userfw_mod_unregister(userfw_module_id_t id)
 }
 
 int
-module_used_in_match(userfw_match * match, userfw_module_id_t id)
+module_used_in_match(userfw_match *match, userfw_module_id_t id)
 {
 	int i;
 
@@ -128,9 +129,43 @@ module_used_in_match(userfw_match * match, userfw_module_id_t id)
 
 	for(i = 0; i < match->nargs; i++)
 	{
-		if (match->args[i].type == T_MATCH && 
-				module_used_in_match(match->args[i].match.p, id))
-			return 1;
+		switch (match->args[i].type)
+		{
+		case T_MATCH:
+			if (module_used_in_match(match->args[i].match.p, id))
+				return 1;
+			break;
+		case T_ACTION:
+			if (module_used_in_action(match->args[i].action.p, id))
+				return 1;
+			break;
+		}
+	}
+
+	return 0;
+}
+
+int
+module_used_in_action(userfw_action *action, userfw_module_id_t id)
+{
+	int i;
+
+	if (action->mod == id)
+		return 1;
+
+	for(i = 0; i < action->nargs; i++)
+	{
+		switch (action->args[i].type)
+		{
+		case T_MATCH:
+			if (module_used_in_match(action->args[i].match.p, id))
+				return 1;
+			break;
+		case T_ACTION:
+			if (module_used_in_action(action->args[i].action.p, id))
+				return 1;
+			break;
+		}
 	}
 
 	return 0;
@@ -140,19 +175,12 @@ int
 module_used(userfw_module_id_t id)
 {
 	userfw_rule *rule = global_rules.rule;
-	int i;
 
 	while(rule != NULL)
 	{
-		if (module_used_in_match(&(rule->match), id))
+		if (module_used_in_match(&(rule->match), id) ||
+				module_used_in_action(&(rule->action), id))
 			return 1;
-
-		for(i = 0; i < rule->action.nargs; i++)
-		{
-			if (rule->action.args[i].type == T_MATCH &&
-					module_used_in_match(rule->action.args[i].match.p, id))
-				return 1;
-		}
 
 		rule = rule->next;
 	}
