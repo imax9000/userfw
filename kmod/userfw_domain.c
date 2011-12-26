@@ -173,6 +173,12 @@ struct userfwpcb
 	uid_t	uid;
 };
 
+/* TODO: make sysctl variables for so{rcv,snd}space */
+static unsigned long sorcvspace = 8192;
+static unsigned long sosndspace = 8192;
+
+#define sotopcb(so)	((struct userfwpcb *)((so)->so_pcb))
+
 SLIST_HEAD(socket_list, userfwpcb) socket_list_head =
 	SLIST_HEAD_INITIALIZER(socket_list_head);
 
@@ -217,12 +223,45 @@ userfw_soattach(struct socket *so,
 		int proto,
 		struct thread *td)
 {
+	struct userfwpcb *pcb = sotopcb(so);
+	int err = 0;
+	struct socket_list_entry *so_list_entry = NULL;
+
+	if (pcb != NULL)
+		return EISCONN;
+
+	/* Reserve space for socket */
+	err = soreserve(so, sosndspace, sorcvspace);
+	if (err != 0)
+		return err;
+
+	/* Allocate pcb */
+	pcb = malloc(sizeof(struct userfwpcb), M_PCB, M_WAITOK | M_ZERO);
+	pcb->sock = so;
+	pcb->uid = 0; /* TODO */
+	so->so_pcb = (caddr_t)pcb;
+
+	/* Add socket to list */
+	mtx_lock(&so_list_mtx);
+	SLIST_INSERT_HEAD(so_list, pcb, next);
+	mtx_unlock(&so_list_mtx);
+
 	return 0;
 };
 
 static void
 userfw_sodetach(struct socket *so)
 {
+	struct userfwpcb *pcb = sotopcb(so);
+
+	pcb->sock->so_pcb = NULL;
+	/* remove socket from list */
+	mtx_lock(&so_list_mtx);
+	SLIST_REMOVE(so_list, pcb, userfwpcb, next);
+	mtx_unlock(&so_list_mtx);
+
+	/* destroy pcb */
+	free(pcb, M_PCB);
 };
 
 static int
