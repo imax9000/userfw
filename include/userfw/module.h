@@ -97,7 +97,7 @@ typedef union __userfw_arg
 
 typedef int (*userfw_match_fn)(struct mbuf **, userfw_chk_args *, userfw_match *, userfw_cache *);
 typedef int (*userfw_action_fn)(struct mbuf **, userfw_chk_args *, userfw_action *, userfw_cache *);
-typedef int (*userfw_cmd_handler)(opcode_t, userfw_arg *, struct socket *, struct thread *);
+typedef int (*userfw_cmd_handler)(opcode_t, uint32_t, userfw_arg *, struct socket *, struct thread *);
 
 typedef struct __userfw_match_descr
 {
