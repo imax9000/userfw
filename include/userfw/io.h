@@ -29,24 +29,71 @@
 #define USERFW_IO_H
 
 #include <userfw/module.h>
+#include <sys/socket.h>
 
 #define AF_USERFW	145 /* just random unused number */
 
+struct sockaddr_userfw
+{
+	uint8_t	sa_len;
+	sa_family_t	sa_family;
+	userfw_module_id_t	module;
+};
+
 #define PACKED	__attribute__((packed))
 
-#define USERFW_IO_RULESET	1
-#define	USERFW_IO_MODLIST	2
+/* Basic header structure
+ * Values that gets matched against parts of network packet should be in
+ * network byte order, all other - in host byte order */
+struct userfw_message_header
+{
+	uint32_t	type;
+	uint32_t	length;
+	uint32_t	cookie;
+} PACKED;
 
-#define USERFW_IO_MODINFO	100
-#define USERFW_IO_ACTION_DESCR	101
-#define	USERFW_IO_MATCH_DESCR	102
+enum
+{
+	USERFW_MSG_COMMAND
+	,USERFW_MSG_STATUS
+	,USERFW_MSG_DATA
+};
 
-#define	USERFW_IO_STRING	200
-#define USERFW_IO_UINT16	201
-#define USERFW_IO_UINT32	202
-#define USERFW_IO_IPv4	203
-#define USERFW_IO_MATCH	204
-#define USERFW_IO_ACTION	205
+struct userfw_command_header
+{
+	uint32_t	opcode; /* opcode is module-specific */
+	uint32_t	length;
+} PACKED;
+
+struct userfw_status_header
+{
+	uint32_t	result;
+	uint32_t	length;
+} PACKED;
+
+enum
+{
+	USERFW_STATUS_OK
+	,USERFW_STATUS_FAILED
+};
+
+struct userfw_data_header
+{
+	uint32_t	type;
+	uint32_t	length;
+} PACKED;
+
+struct userfw_match_data
+{
+	userfw_module_id_t	mod;
+	opcode_t	op;
+} PACKED;
+
+struct userfw_action_data
+{
+	userfw_module_id_t	mod;
+	opcode_t	op;
+} PACKED;
 
 struct userfw_io_modinfo
 {
