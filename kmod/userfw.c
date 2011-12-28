@@ -30,6 +30,7 @@
 #include "userfw_pfil.h"
 #include "userfw_module.h"
 #include "userfw_domain.h"
+#include "userfw_util.h"
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -45,8 +46,6 @@ int userfw_modules_count;
 void init_ruleset(userfw_ruleset *p);
 void delete_ruleset(userfw_ruleset *p);
 int check_packet(struct mbuf **mb, int global, userfw_chk_args *args, userfw_ruleset *ruleset);
-void delete_match_data(userfw_match *match);
-void delete_action_data(userfw_action *match);
 
 MALLOC_DEFINE(M_USERFW, "userfw", "Memory for userfw rules and cache");
 
@@ -113,54 +112,6 @@ init_ruleset(userfw_ruleset *p)
 }
 
 void
-delete_match_data(userfw_match *match)
-{
-	int i;
-
-	for(i = 0; i < match->nargs; i++)
-	{
-		switch (match->args[i].type)
-		{
-		case T_STRING:
-			free(match->args[i].string.data, M_USERFW);
-			break;
-		case T_MATCH:
-			delete_match_data(match->args[i].match.p);
-			free(match->args[i].match.p, M_USERFW);
-			break;
-		case T_ACTION:
-			delete_action_data(match->args[i].action.p);
-			free(match->args[i].match.p, M_USERFW);
-			break;
-		}
-	}
-}
-
-void
-delete_action_data(userfw_action *action)
-{
-	int i;
-
-	for(i = 0; i < action->nargs; i++)
-	{
-		switch (action->args[i].type)
-		{
-		case T_STRING:
-			free(action->args[i].string.data, M_USERFW);
-			break;
-		case T_MATCH:
-			delete_match_data(action->args[i].match.p);
-			free(action->args[i].match.p, M_USERFW);
-			break;
-		case T_ACTION:
-			delete_action_data(action->args[i].action.p);
-			free(action->args[i].match.p, M_USERFW);
-			break;
-		}
-	}
-}
-
-void
 delete_ruleset(userfw_ruleset *p)
 {
 	userfw_rule *current = p->rule, *next;
@@ -168,8 +119,8 @@ delete_ruleset(userfw_ruleset *p)
 	while(current != NULL)
 	{
 		next = current->next;
-		delete_match_data(&(current->match));
-		delete_action_data(&(current->action));
+		free_match_args(&(current->match));
+		free_action_args(&(current->action));
 		free(current, M_USERFW);
 		current = next;
 	}
