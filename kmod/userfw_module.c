@@ -209,3 +209,63 @@ userfw_mod_find(userfw_module_id_t id)
 
 	return ret;
 }
+
+const userfw_match_descr *
+userfw_mod_find_match(userfw_module_id_t mod, opcode_t id)
+{
+	const userfw_modinfo *modinfo = NULL;
+	int i;
+
+	modinfo = userfw_mod_find(mod);
+
+	if (modinfo == NULL)
+		return NULL;
+
+	for(i = 0; i < modinfo->nmatches; i++)
+	{
+		if (modinfo->matches[i].opcode == id)
+			return &(modinfo->matches[i]);
+	}
+
+	return NULL;
+}
+
+const userfw_action_descr *
+userfw_mod_find_action(userfw_module_id_t mod, opcode_t id)
+{
+	const userfw_modinfo *modinfo = NULL;
+	int i;
+
+	modinfo = userfw_mod_find(mod);
+
+	if (modinfo == NULL)
+		return NULL;
+
+	for(i = 0; i < modinfo->nactions; i++)
+	{
+		if (modinfo->actions[i].opcode == id)
+			return &(modinfo->actions[i]);
+	}
+
+	return NULL;
+}
+
+const userfw_cmd_descr *
+userfw_mod_find_cmd(userfw_module_id_t mod, opcode_t id)
+{
+	const userfw_modinfo *modinfo = NULL;
+	int i;
+
+	modinfo = userfw_mod_find(mod);
+
+	if (modinfo == NULL)
+		return NULL;
+
+	for(i = 0; i < modinfo->ncmds; i++)
+	{
+		if (modinfo->cmds[i].opcode == id)
+			return &(modinfo->cmds[i]);
+	}
+
+	return NULL;
+}

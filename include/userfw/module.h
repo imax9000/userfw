@@ -158,7 +158,10 @@ typedef struct __userfw_modinfo
 
 int userfw_mod_register(userfw_modinfo *);
 int userfw_mod_unregister(userfw_module_id_t);
-userfw_modinfo const *userfw_mod_find(userfw_module_id_t);
+const userfw_modinfo *userfw_mod_find(userfw_module_id_t);
+const userfw_match_descr *userfw_mod_find_match(userfw_module_id_t, opcode_t);
+const userfw_action_descr *userfw_mod_find_action(userfw_module_id_t, opcode_t);
+const userfw_cmd_descr *userfw_mod_find_cmd(userfw_module_id_t, opcode_t);
 #endif /* _KERNEL */
 
 #endif /* USERFW_MODULE_H */
