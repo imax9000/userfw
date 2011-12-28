@@ -5,6 +5,7 @@ SRCS=	userfw_mod.c \
 	userfw_cache.c \
 	userfw_pfil.c \
 	userfw_domain.c \
+	userfw_cmd.c \
 	userfw_util.c \
 	base.c
 KMOD=	userfw
