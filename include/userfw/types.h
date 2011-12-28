@@ -41,7 +41,8 @@ enum userfw_direction
 
 typedef enum __userfw_type
 {
-	T_STRING = 0
+	T_INVAL = 0
+	,T_STRING
 	,T_UINT16
 	,T_UINT32
 	,T_IPv4
