@@ -188,11 +188,11 @@ module_used(userfw_module_id_t id)
 	return 0;
 }
 
-userfw_modinfo const *
+const userfw_modinfo *
 userfw_mod_find(userfw_module_id_t id)
 {
 	struct modinfo_entry *m;
-	userfw_modinfo const *ret = NULL;
+	const userfw_modinfo *ret = NULL;
 
 	rw_rlock(&userfw_modules_list_mtx);
 
@@ -200,7 +200,7 @@ userfw_mod_find(userfw_module_id_t id)
 	{
 		if (m->data->id == id)
 		{
-			ret = (userfw_modinfo const *)(m->data);
+			ret = m->data;
 			break;
 		}
 	}
