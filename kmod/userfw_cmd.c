@@ -124,7 +124,8 @@ parse_arg(unsigned char *buf, userfw_arg *dst)
 	{
 	case T_STRING:
 		dst->string.length = arg->length - sizeof(*arg);
-		dst->string.data = buf + sizeof(*arg);
+		dst->string.data = malloc(arg->length - sizeof(*arg), M_USERFW, M_WAITOK);
+		bcopy(buf + sizeof(*arg), dst->string.data, arg->length - sizeof(*arg));
 		break;
 	case T_UINT16:
 		bcopy(data, &(dst->uint16.value), sizeof(uint16_t));
