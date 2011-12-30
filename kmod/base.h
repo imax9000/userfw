@@ -28,6 +28,6 @@
 #ifndef USERFW_MOD_BASE_H
 #define USERFW_MOD_BASE_H
 
-#define	USERFW_BASE_MOD	1321097361
+#define	USERFW_BASE_MOD	0
 
 #endif /* USERFW_MOD_BASE_H */
