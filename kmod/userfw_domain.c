@@ -274,6 +274,8 @@ userfw_soattach(struct socket *so,
 	SLIST_INSERT_HEAD(so_list, pcb, next);
 	mtx_unlock(&so_list_mtx);
 
+	so->so_state = so->so_state | SS_ISCONNECTED;
+
 	return 0;
 }
 
