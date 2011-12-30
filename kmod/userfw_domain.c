@@ -188,6 +188,8 @@ userfw_connect(struct socket *so,
 #include <sys/mutex.h>
 #include <sys/ucred.h>
 #include <sys/proc.h>
+#include <sys/mbuf.h>
+#include "userfw_cmd.h"
 
 struct userfwpcb
 {
@@ -298,11 +300,75 @@ static int
 userfw_sosend(struct socket *so,
 		int flags,
 		struct mbuf *m,
-		struct sockaddr *addr,
+		struct sockaddr *addr_,
 		struct mbuf *control,
 		struct thread *td)
 {
-	return 0;
+	int err = 0;
+	userfw_module_id_t	dst_mod;
+	struct userfwpcb *pcb = sotopcb(so);
+	struct userfw_message_header *msg = NULL;
+	int cmd_ready = 0;
+	unsigned char *data = NULL;
+	struct sockaddr_userfw *addr = (struct sockaddr_userfw *)addr_;
+
+	if (pcb == NULL)
+		err = ENOTCONN;
+
+	if (control != NULL)
+		err = EINVAL;
+
+	SOCKBUF_LOCK(&(so->so_snd));
+
+	if (err == 0)
+	{
+		if (addr == NULL)
+			dst_mod = pcb->module;
+		else
+			dst_mod = addr->module;
+		
+		sbappendstream_locked(&(so->so_snd), m);
+		m = NULL;
+
+		if (so->so_snd.sb_cc >= sizeof(*msg))
+		{
+			so->so_snd.sb_mb = m_pullup(so->so_snd.sb_mb, sizeof(*msg));
+			if (so->so_snd.sb_mb != NULL)
+				msg = mtod(so->so_snd.sb_mb, struct userfw_message_header *);
+			else
+				err = ENOBUFS;
+			if (so->so_snd.sb_cc >= msg->length)
+				cmd_ready = 1;
+		}
+	}
+
+	if (err == 0 && cmd_ready)
+	{
+		if (msg->type != USERFW_MSG_COMMAND)
+		{
+			cmd_ready = 0;
+			sbdrop_locked(&(so->so_snd), msg->length);
+		}
+	}
+
+	if (err == 0 && cmd_ready)
+	{
+		so->so_snd.sb_mb = m_pullup(so->so_snd.sb_mb, msg->length);
+		data = mtod(so->so_snd.sb_mb, unsigned char *);
+		msg = (struct userfw_message_header *) data;
+
+		err = userfw_cmd_dispatch(data, dst_mod, so, td);
+		sbdrop_locked(&(so->so_snd), msg->length);
+	}
+
+	SOCKBUF_UNLOCK(&(so->so_snd));
+
+	if (control != NULL)
+		m_freem(control);
+	if (m != NULL)
+		m_freem(m);
+
+	return err;
 }
 
 static int
