@@ -27,6 +27,7 @@
 #ifndef USERFW_RULESET_H
 #define USERFW_RULESET_H
 
+#ifdef _KERNEL
 #include <sys/param.h>
 #include <sys/lock.h>
 #include <sys/rwlock.h>
@@ -59,4 +60,5 @@ extern userfw_ruleset global_rules;
 void init_ruleset(userfw_ruleset *, const char *name);
 void delete_ruleset(userfw_ruleset *);
 
+#endif /* _KERNEL */
 #endif /* USERFW_RULESET_H */
