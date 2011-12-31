@@ -391,6 +391,45 @@ userfw_connect(struct socket *so,
 	return 0;
 }
 
+int
+userfw_domain_send_to_socket(struct socket *so, unsigned char *buf, size_t len)
+{
+	struct mbuf *m = NULL;
+
+	m = m_getm(NULL, len, M_WAITOK, MT_DATA);
+	if (m == NULL)
+		return ENOBUFS;
+#if 0
+	m = m_pullup(m, len);
+	if (m == NULL)
+		return ENOBUFS;
+#endif
+	bcopy(buf, mtod(m, void *), len);
+
+	sbappendstream(&(so->so_rcv), m);
+
+	return 0;
+}
+
+int
+userfw_domain_send_to_uid(uid_t uid, unsigned char *buf, size_t len)
+{
+	struct userfwpcb *p;
+	int count = 0;
+
+	mtx_lock(&so_list_mtx);
+	SLIST_FOREACH(p, so_list, next)
+	{
+		if (p->uid == uid)
+		{
+			if (userfw_domain_send_to_socket(p->sock, buf, len) == 0)
+				count++;
+		}
+	}
+	mtx_unlock(&so_list_mtx);
+
+	return count;
+}
 
 #endif /* I_AM_DOMAIN_STUB */
 

@@ -119,4 +119,9 @@ struct userfw_io_match_descr
 	char	name[USERFW_NAME_LEN];
 } PACKED;
 
+#ifdef _KERNEL
+int userfw_domain_send_to_socket(struct socket *, unsigned char *, size_t);
+int userfw_domain_send_to_uid(uid_t, unsigned char *, size_t);
+#endif /* _KERNEL */
+
 #endif /* USERFW_IO_H */
