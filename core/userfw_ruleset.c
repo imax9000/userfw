@@ -24,23 +24,30 @@
  * SUCH DAMAGE.
  */
 
+#include <userfw/ruleset.h>
+#include "userfw_util.h"
 
-#ifndef USERFW_H
-#define USERFW_H
+userfw_ruleset global_rules;
 
-#include <sys/param.h>
-#include <sys/socket.h>
-#include <sys/mbuf.h>
-#include <net/if.h>
-#include <sys/lock.h>
-#include <sys/queue.h>
-#include <sys/rwlock.h>
-#include <userfw/types.h>
-#include <userfw/module.h>
+void
+init_ruleset(userfw_ruleset *p, const char *name)
+{
+	p->rule = NULL;
+	USERFW_INIT_LOCK(p, name);
+}
 
-int userfw_init(void);
-int userfw_uninit(void);
+void
+delete_ruleset(userfw_ruleset *p)
+{
+	userfw_rule *current = p->rule, *next;
 
-int userfw_chk(struct mbuf **, userfw_chk_args *);
-
-#endif /* USERFW_H */
+	USERFW_UNINIT_LOCK(p);
+	while(current != NULL)
+	{
+		next = current->next;
+		free_match_args(&(current->match));
+		free_action_args(&(current->action));
+		free(current, M_USERFW);
+		current = next;
+	}
+}

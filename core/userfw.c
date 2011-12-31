@@ -31,6 +31,7 @@
 #include "userfw_module.h"
 #include "userfw_domain.h"
 #include "userfw_util.h"
+#include <userfw/ruleset.h>
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -38,13 +39,6 @@
 #include <netinet/udp.h>
 #include <netinet/sctp.h>
 
-userfw_ruleset global_rules;
-
-userfw_modinfo *userfw_modules;
-int userfw_modules_count;
-
-void init_ruleset(userfw_ruleset *p);
-void delete_ruleset(userfw_ruleset *p);
 int check_packet(struct mbuf **mb, int global, userfw_chk_args *args, userfw_ruleset *ruleset);
 
 MALLOC_DEFINE(M_USERFW, "userfw", "Memory for userfw rules and cache");
@@ -60,9 +54,7 @@ int userfw_init()
 	err = userfw_dev_register();
 #endif
 
-	init_ruleset(&global_rules);
-
-	USERFW_INIT_LOCK(&global_rules, "userfw global ruleset lock");
+	init_ruleset(&global_rules, "userfw global ruleset lock");
 
 	if (!err)
 		err = userfw_pfil_register();
@@ -86,8 +78,6 @@ int userfw_uninit()
 	{
 		rw_destroy(&userfw_modules_list_mtx);
 
-		USERFW_UNINIT_LOCK(&global_rules);
-	
 		delete_ruleset(&global_rules);
 	}
 
@@ -103,27 +93,6 @@ int
 userfw_chk(struct mbuf **mb, userfw_chk_args *args)
 {
 	return check_packet(mb, 1, args, &global_rules);
-}
-
-void
-init_ruleset(userfw_ruleset *p)
-{
-	p->rule = NULL;
-}
-
-void
-delete_ruleset(userfw_ruleset *p)
-{
-	userfw_rule *current = p->rule, *next;
-
-	while(current != NULL)
-	{
-		next = current->next;
-		free_match_args(&(current->match));
-		free_action_args(&(current->action));
-		free(current, M_USERFW);
-		current = next;
-	}
 }
 
 int

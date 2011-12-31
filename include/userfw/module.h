@@ -33,10 +33,13 @@
 #ifdef _KERNEL
 #include <sys/param.h>
 #include <sys/kernel.h>
+#include <sys/malloc.h>
 
 struct mbuf;
 struct thread;
 struct socket;
+
+MALLOC_DECLARE(M_USERFW);
 #endif
 
 #define	USERFW_ARGS_MAX	8
