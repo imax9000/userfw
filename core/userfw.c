@@ -39,8 +39,6 @@
 #include <netinet/udp.h>
 #include <netinet/sctp.h>
 
-int check_packet(struct mbuf **mb, int global, userfw_chk_args *args, userfw_ruleset *ruleset);
-
 MALLOC_DEFINE(M_USERFW, "userfw", "Memory for userfw rules and cache");
 
 int userfw_init()
@@ -92,11 +90,11 @@ int userfw_uninit()
 int
 userfw_chk(struct mbuf **mb, userfw_chk_args *args)
 {
-	return check_packet(mb, 1, args, &global_rules);
+	return check_packet(mb, args, &global_rules);
 }
 
 int
-check_packet(struct mbuf **mb, int global, userfw_chk_args *args, userfw_ruleset *ruleset)
+check_packet(struct mbuf **mb, userfw_chk_args *args, userfw_ruleset *ruleset)
 {
 	userfw_rule *rule = ruleset->rule;
 	userfw_cache cache;

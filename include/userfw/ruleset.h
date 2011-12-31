@@ -60,5 +60,7 @@ extern userfw_ruleset global_rules;
 void init_ruleset(userfw_ruleset *, const char *name);
 void delete_ruleset(userfw_ruleset *);
 
+int check_packet(struct mbuf **mb, userfw_chk_args *args, userfw_ruleset *ruleset);
+
 #endif /* _KERNEL */
 #endif /* USERFW_RULESET_H */
