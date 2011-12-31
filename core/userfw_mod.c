@@ -64,5 +64,6 @@ MODULE_VERSION(userfw_core, 1);
 #ifndef SKIP_DOMAIN_STUB
 MODULE_DEPEND(userfw_core, userfw_domain_stub, 1, 1, 1);
 #endif
+MODULE_DEPEND(userfw_core, libmchain, 1, 1, 1);
 
 DECLARE_MODULE(userfw_core, userfw_mod, SI_SUB_USERFW, SI_ORDER_USERFW_CORE);

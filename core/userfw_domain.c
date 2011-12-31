@@ -189,6 +189,7 @@ userfw_connect(struct socket *so,
 #include <sys/ucred.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
+#include <sys/mchain.h>
 #include "userfw_cmd.h"
 
 struct userfwpcb
@@ -307,10 +308,11 @@ userfw_sosend(struct socket *so,
 	int err = 0;
 	userfw_module_id_t	dst_mod;
 	struct userfwpcb *pcb = sotopcb(so);
-	struct userfw_message_header *msg = NULL;
+	struct userfw_message_header msg;
 	int cmd_ready = 0;
 	unsigned char *data = NULL;
 	struct sockaddr_userfw *addr = (struct sockaddr_userfw *)addr_;
+	struct mdchain chain;
 
 	if (pcb == NULL)
 		err = ENOTCONN;
@@ -330,35 +332,33 @@ userfw_sosend(struct socket *so,
 		sbappendstream_locked(&(so->so_snd), m);
 		m = NULL;
 
-		if (so->so_snd.sb_cc >= sizeof(*msg))
+		md_initm(&chain, so->so_snd.sb_mb);
+		if (so->so_snd.sb_cc >= sizeof(msg))
 		{
-			so->so_snd.sb_mb = m_pullup(so->so_snd.sb_mb, sizeof(*msg));
-			if (so->so_snd.sb_mb != NULL)
-				msg = mtod(so->so_snd.sb_mb, struct userfw_message_header *);
-			else
-				err = ENOBUFS;
-			if (so->so_snd.sb_cc >= msg->length)
+			md_get_mem(&chain, (caddr_t)(&msg), sizeof(msg), MB_MSYSTEM);
+			if (so->so_snd.sb_cc >= msg.length)
 				cmd_ready = 1;
 		}
 	}
 
 	if (err == 0 && cmd_ready)
 	{
-		if (msg->type != USERFW_MSG_COMMAND)
+		if (msg.type != USERFW_MSG_COMMAND)
 		{
 			cmd_ready = 0;
-			sbdrop_locked(&(so->so_snd), msg->length);
+			sbdrop_locked(&(so->so_snd), msg.length);
 		}
 	}
 
 	if (err == 0 && cmd_ready)
 	{
-		so->so_snd.sb_mb = m_pullup(so->so_snd.sb_mb, msg->length);
-		data = mtod(so->so_snd.sb_mb, unsigned char *);
-		msg = (struct userfw_message_header *) data;
+		data = malloc(msg.length, M_USERFW, M_WAITOK);
+		md_initm(&chain, so->so_snd.sb_mb);
+		md_get_mem(&chain, data, msg.length, MB_MSYSTEM);
 
 		err = userfw_cmd_dispatch(data, dst_mod, so, td);
-		sbdrop_locked(&(so->so_snd), msg->length);
+		sbdrop_locked(&(so->so_snd), msg.length);
+		free(data, M_USERFW);
 	}
 
 	SOCKBUF_UNLOCK(&(so->so_snd));
@@ -394,19 +394,19 @@ userfw_connect(struct socket *so,
 int
 userfw_domain_send_to_socket(struct socket *so, unsigned char *buf, size_t len)
 {
-	struct mbuf *m = NULL;
+	struct mbchain m;
+	int err;
 
-	m = m_getm(NULL, len, M_WAITOK, MT_DATA);
-	if (m == NULL)
-		return ENOBUFS;
-#if 0
-	m = m_pullup(m, len);
-	if (m == NULL)
-		return ENOBUFS;
-#endif
-	bcopy(buf, mtod(m, void *), len);
+	mb_init(&m);
+	err = mb_put_mem(&m, buf, len, MB_MSYSTEM);
+	if (err != 0)
+	{
+		mb_done(&m);
+		return err;
+	}
 
-	sbappendstream(&(so->so_rcv), m);
+	sbappendstream(&(so->so_rcv), mb_detach(&m));
+	sorwakeup(so);
 
 	return 0;
 }
