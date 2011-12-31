@@ -52,7 +52,7 @@ int userfw_init()
 	err = userfw_dev_register();
 #endif
 
-	init_ruleset(&global_rules, "userfw global ruleset lock");
+	userfw_ruleset_init(&global_rules, "userfw global ruleset lock");
 
 	if (!err)
 		err = userfw_pfil_register();
@@ -76,7 +76,7 @@ int userfw_uninit()
 	{
 		rw_destroy(&userfw_modules_list_mtx);
 
-		delete_ruleset(&global_rules);
+		userfw_ruleset_uninit(&global_rules);
 	}
 
 #if 0

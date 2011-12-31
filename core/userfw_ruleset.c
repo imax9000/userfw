@@ -30,14 +30,14 @@
 userfw_ruleset global_rules;
 
 void
-init_ruleset(userfw_ruleset *p, const char *name)
+userfw_ruleset_init(userfw_ruleset *p, const char *name)
 {
 	p->rule = NULL;
 	USERFW_INIT_LOCK(p, name);
 }
 
 void
-delete_ruleset(userfw_ruleset *p)
+userfw_ruleset_uninit(userfw_ruleset *p)
 {
 	userfw_rule *current = p->rule, *next;
 
