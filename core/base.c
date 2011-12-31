@@ -77,11 +77,7 @@ enum __base_matches
 static int
 match_direction(struct mbuf **mb, userfw_chk_args *args, userfw_match *m, userfw_cache *cache)
 {
-	if (m->mod != USERFW_BASE_MOD || (m->op != M_IN && m->op != M_OUT))
-	{
-		printf("userfw_base: match_direction: called with wrong opcode %d:%d\n", m->mod, m->op);
-		return 0;
-	}
+	VERIFY_OPCODE2(m, USERFW_BASE_MOD, M_IN, M_OUT, 0);
 
 	if (args->dir == m->op)
 		return 1;
@@ -96,11 +92,7 @@ match_ipv4(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_
 	uint32_t	val = 0;
 	struct ip	*ip = mtod(m, struct ip *);
 
-	if (match->mod != USERFW_BASE_MOD || (match->op != M_SRCIPV4 && match->op != M_DSTIPV4))
-	{
-		printf("userfw_base: match_ipv4: called with wrong opcode %d:%d\n", match->mod, match->op);
-		return 0;
-	}
+	VERIFY_OPCODE2(match, USERFW_BASE_MOD, M_SRCIPV4, M_DSTIPV4, 0);
 
 	if (ip->ip_v != 4)
 		return 0;
@@ -133,11 +125,7 @@ match_port(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_
 	struct sctphdr	*sctp;
 	int	ip_header_len = (ip->ip_hl) << 2;
 
-	if (match->mod != USERFW_BASE_MOD || (match->op != M_SRCPORT && match->op != M_DSTPORT))
-	{
-		printf("userfw_base: match_port: called with wrong opcode %d:%d\n", match->mod, match->op);
-		return 0;
-	}
+	VERIFY_OPCODE2(match, USERFW_BASE_MOD, M_SRCPORT, M_DSTPORT, 0);
 
 	switch (ip->ip_p)
 	{
@@ -220,11 +208,7 @@ match_logic(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw
 	userfw_match	*match1, *match2;
 	int	ret1;
 
-	if (match->mod != USERFW_BASE_MOD || (match->op != M_OR && match->op != M_AND))
-	{
-		printf("userfw_base: match_logic: called with wrong opcode %d:%d\n", match->mod, match->op);
-		return 0;
-	}
+	VERIFY_OPCODE2(match, USERFW_BASE_MOD, M_OR, M_AND, 0);
 
 	match1 = match->args[0].match.p;
 	match2 = match->args[1].match.p;
@@ -248,11 +232,7 @@ match_invert(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userf
 {
 	userfw_match	*match1;
 
-	if (match->mod != USERFW_BASE_MOD || match->op != M_NOT)
-	{
-		printf("userfw_base: match_invert: called with wrong opcode %d:%d\n", match->mod, match->op);
-		return 0;
-	}
+	VERIFY_OPCODE(match, USERFW_BASE_MOD, M_NOT, 0);
 
 	match1 = match->args[0].match.p;
 	if (match1->do_match(mb, args, match1, cache))

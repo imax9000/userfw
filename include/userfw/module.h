@@ -162,6 +162,28 @@ const userfw_modinfo *userfw_mod_find(userfw_module_id_t);
 const userfw_match_descr *userfw_mod_find_match(userfw_module_id_t, opcode_t);
 const userfw_action_descr *userfw_mod_find_action(userfw_module_id_t, opcode_t);
 const userfw_cmd_descr *userfw_mod_find_cmd(userfw_module_id_t, opcode_t);
+
+#define VERIFY_OPCODE(obj, module, opcode, retval) do { \
+		if ((obj)->mod != (module) || (obj)->op != (opcode)) \
+		{ \
+			printf("userfw: %s: called with wrong opcode %d:%d", __func__, (obj)->mod, (obj)->op); \
+			return (retval); \
+		} } while(0)
+
+#define VERIFY_OPCODE2(obj, module, opcode1, opcode2, retval) do { \
+		if ((obj)->mod != (module) || ((obj)->op != (opcode1) && (obj)->op != (opcode2))) \
+		{ \
+			printf("userfw: %s: called with wrong opcode %d:%d", __func__, (obj)->mod, (obj)->op); \
+			return (retval); \
+		} } while(0)
+
+#define VERIFY_OPCODE3(obj, module, opcode1, opcode2, opcode3, retval) do { \
+		if ((obj)->mod != (module) || ((obj)->op != (opcode1) && (obj)->op != (opcode2) && (obj)->op != (opcode3))) \
+		{ \
+			printf("userfw: %s: called with wrong opcode %d:%d", __func__, (obj)->mod, (obj)->op); \
+			return (retval); \
+		} } while(0)
+
 #endif /* _KERNEL */
 
 #endif /* USERFW_MODULE_H */
