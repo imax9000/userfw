@@ -297,6 +297,8 @@ userfw_sodetach(struct socket *so)
 	free(pcb, M_PCB);
 }
 
+#define SOCKBUF_LEN(sb) (sb).sb_cc
+
 static int
 userfw_sosend(struct socket *so,
 		int flags,
@@ -308,7 +310,7 @@ userfw_sosend(struct socket *so,
 	int err = 0;
 	userfw_module_id_t	dst_mod;
 	struct userfwpcb *pcb = sotopcb(so);
-	struct userfw_message_header msg;
+	struct userfw_io_header msg;
 	int cmd_ready = 0;
 	unsigned char *data = NULL;
 	struct sockaddr_userfw *addr = (struct sockaddr_userfw *)addr_;
@@ -333,17 +335,17 @@ userfw_sosend(struct socket *so,
 		m = NULL;
 
 		md_initm(&chain, so->so_snd.sb_mb);
-		if (so->so_snd.sb_cc >= sizeof(msg))
+		if (SOCKBUF_LEN(so->so_snd) >= sizeof(msg))
 		{
 			md_get_mem(&chain, (caddr_t)(&msg), sizeof(msg), MB_MSYSTEM);
-			if (so->so_snd.sb_cc >= msg.length)
+			if (SOCKBUF_LEN(so->so_snd) >= msg.length)
 				cmd_ready = 1;
 		}
 	}
 
 	if (err == 0 && cmd_ready)
 	{
-		if (msg.type != USERFW_MSG_COMMAND)
+		if (msg.type != T_CONTAINER || (msg.subtype != ST_MESSAGE && msg.subtype != ST_CMDCALL))
 		{
 			cmd_ready = 0;
 			sbdrop_locked(&(so->so_snd), msg.length);

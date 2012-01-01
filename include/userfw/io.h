@@ -45,79 +45,61 @@ struct sockaddr_userfw
 /* Basic header structure
  * Values that gets matched against parts of network packet should be in
  * network byte order, all other - in host byte order */
-struct userfw_message_header
+struct userfw_io_header
 {
 	uint32_t	type;
+	uint32_t	subtype;
 	uint32_t	length;
-	uint32_t	cookie;
 } PACKED;
 
-enum
-{
-	USERFW_MSG_COMMAND
-	,USERFW_MSG_STATUS
-	,USERFW_MSG_DATA
+/* Additional types, should be used only in communication */
+enum {
+	T_CONTAINER = 1024
 };
 
-struct userfw_command_header
-{
-	uint32_t	opcode; /* opcode is module-specific */
-	uint32_t	length;
-} PACKED;
-
-struct userfw_status_header
-{
-	uint32_t	result;
-	uint32_t	length;
-} PACKED;
-
-enum
-{
-	USERFW_STATUS_OK
-	,USERFW_STATUS_FAILED
+/* Subtypes used to describe what data should mean */
+enum {
+	ST_UNSPEC = 0
+	,ST_MESSAGE = 2048	/* T_CONTAINER (T_UINT32/ST_COOKIE, ...) */
+	,ST_COOKIE	/* T_UINT32 */
+	,ST_CMDCALL	/* T_CONTAINER (T_UINT32/ST_OPCODE, ST_ARG, ...) */
+	,ST_OPCODE	/* T_UINT32 */
+	,ST_MOD_ID	/* T_UINT32 */
+	,ST_ARG	/* T_* */
+	,ST_RESULT	/* T_CONTAINER */
+	,ST_RULE	/* T_CONTAINER (T_UINT32, T_ACTION, T_MATCH) */
+	,ST_RULESET	/* T_CONTAINER (ST_RULE, ...) */
+	,ST_ERRNO	/* T_UINT32 */
+	,ST_MOD_DESCR	/* T_CONTAINER (T_STRING/ST_NAME, T_UINT32/ST_MOD_ID) */
+	,ST_ACTION_DESCR	/* T_CONTAINER (T_UINT32/ST_OPCODE, T_STRING/ST_NAME, T_UINT32/ST_ARGTYPE, ...) */
+	,ST_MATCH_DESCR	/* T_CONTAINER (T_UINT32/ST_OPCODE, T_STRING/ST_NAME, T_UINT32/ST_ARGTYPE, ...) */
+	,ST_CMD_DESCR	/* T_CONTAINER (T_UINT32/ST_OPCODE, T_STRING/ST_NAME, T_UINT32/ST_ARGTYPE, ...) */
+	,ST_NAME	/* T_STRING */
+	,ST_ARGTYPE	/* T_UINT32 */
 };
 
-struct userfw_data_header
+inline static struct userfw_io_header *
+userfw_io_find_block(unsigned char *buf, size_t len, uint32_t type, uint32_t subtype)
 {
-	uint32_t	type;
-	uint32_t	length;
-} PACKED;
+	struct userfw_io_header *r = (struct userfw_io_header *)buf;
 
-struct userfw_match_data
-{
-	userfw_module_id_t	mod;
-	opcode_t	op;
-} PACKED;
+	while(len >= sizeof(*r))
+	{
+		if ((type != T_INVAL && r->type != type) ||
+			(subtype != ST_UNSPEC && r->subtype != subtype))
+		{
+			buf += r->length;
+			len -= r->length;
+			r = (struct userfw_io_header *)buf;
+			continue;
+		}
+		return r;
+	}
+	return NULL;
+}
 
-struct userfw_action_data
-{
-	userfw_module_id_t	mod;
-	opcode_t	op;
-} PACKED;
-
-struct userfw_io_modinfo
-{
-	userfw_module_id_t	id;
-	uint16_t	nactions;
-	uint16_t	nmatches;
-	char	name[USERFW_NAME_LEN];
-} PACKED;
-
-struct userfw_io_action_descr
-{
-	opcode_t	op;
-	uint8_t	nargs;
-	uint8_t	arg_types[USERFW_ARGS_MAX];
-	char	name[USERFW_NAME_LEN];
-} PACKED;
-
-struct userfw_io_match_descr
-{
-	opcode_t	op;
-	uint8_t	nargs;
-	uint8_t	arg_types[USERFW_ARGS_MAX];
-	char	name[USERFW_NAME_LEN];
-} PACKED;
+#define to_io(t)	((struct userfw_io_header *)(t))
+#define BLOCK_FITS_INTO_OUTER(inner, outer)	((outer) < (inner) && to_io(inner)->length < to_io(outer)->length - ((char*)(inner) - (char*)(outer)))
 
 #ifdef _KERNEL
 int userfw_domain_send_to_socket(struct socket *, unsigned char *, size_t);
