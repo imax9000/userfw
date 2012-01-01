@@ -165,6 +165,8 @@ const userfw_modinfo *userfw_mod_find(userfw_module_id_t);
 const userfw_match_descr *userfw_mod_find_match(userfw_module_id_t, opcode_t);
 const userfw_action_descr *userfw_mod_find_action(userfw_module_id_t, opcode_t);
 const userfw_cmd_descr *userfw_mod_find_cmd(userfw_module_id_t, opcode_t);
+int userfw_mod_inc_refcount(userfw_module_id_t);
+int userfw_mod_dec_refcount(userfw_module_id_t);
 
 #define VERIFY_OPCODE(obj, module, opcode, retval) do { \
 		if ((obj)->mod != (module) || (obj)->op != (opcode)) \

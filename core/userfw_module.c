@@ -33,9 +33,20 @@
 userfw_modules_head_t userfw_modules_list = SLIST_HEAD_INITIALIZER(userfw_modules_list);
 struct rwlock userfw_modules_list_mtx;
 
-int module_used(userfw_module_id_t);
-int module_used_in_match(userfw_match *, userfw_module_id_t);
-int module_used_in_action(userfw_action *, userfw_module_id_t);
+static struct modinfo_entry *
+userfw_mod_find_locked(userfw_module_id_t id)
+{
+	struct modinfo_entry *m;
+
+	SLIST_FOREACH(m, &userfw_modules_list, entries)
+	{
+		if (m->data->id == id)
+		{
+			return m;
+		}
+	}
+	return NULL;
+}
 
 int
 userfw_mod_register(userfw_modinfo * mod)
@@ -58,6 +69,8 @@ userfw_mod_register(userfw_modinfo * mod)
 	{
 		m = malloc(sizeof(struct modinfo_entry), M_USERFW, M_WAITOK);
 		m->data = mod;
+		m->refcount = 0;
+		mtx_init(&(m->refcount_mtx), "userfw: modinfo_entry.refcount_mtx", NULL, MTX_DEF);
 		SLIST_INSERT_HEAD(&userfw_modules_list, m, entries);
 	}
 
@@ -70,143 +83,47 @@ int
 userfw_mod_unregister(userfw_module_id_t id)
 {
 	int ret = 0;
-	struct modinfo_entry *m, *prev = NULL;
-
-	USERFW_RLOCK(&global_rules);
-
-	if (module_used(id))
-	{
-		ret = EBUSY;
-	}
+	struct modinfo_entry *m;
 
 	if (ret == 0)
 	{
 		rw_wlock(&userfw_modules_list_mtx);
 
-		m = SLIST_FIRST(&userfw_modules_list);
-		if (m != NULL && m->data->id == id)
-		{
-			SLIST_REMOVE_HEAD(&userfw_modules_list, entries);
-			free(m, M_USERFW);
-		}
-		else
-		{
-			SLIST_FOREACH(m, &userfw_modules_list, entries)
-			{
-				if (SLIST_NEXT(m, entries) != NULL && SLIST_NEXT(m, entries)->data->id)
-				{
-					prev = m;
-					break;
-				}
-			}
+		m = userfw_mod_find_locked(id);
+#if 0
+		mtx_lock(&(m->refcount_mtx));
+#endif
+		if (m->refcount != 0)
+			ret = EBUSY;
+#if 0
+		mtx_unlock(&(m->refcount_mtx));
+#endif
 
-			if (prev != NULL)
-			{
-				m = SLIST_NEXT(prev, entries);
-				SLIST_REMOVE_AFTER(prev, entries);
-				free(m, M_USERFW);
-			}
-			else
-			{
-				ret = ENOENT;
-			}
+		if (ret == 0)
+		{
+			SLIST_REMOVE(&userfw_modules_list, m, modinfo_entry, entries);
+			mtx_destroy(&(m->refcount_mtx));
+			free(m, M_USERFW);
 		}
 
 		rw_wunlock(&userfw_modules_list_mtx);
 	}
 
-	USERFW_RUNLOCK(&global_rules);
-
 	return ret;
-}
-
-int
-module_used_in_match(userfw_match *match, userfw_module_id_t id)
-{
-	int i;
-
-	if (match->mod == id)
-		return 1;
-
-	for(i = 0; i < match->nargs; i++)
-	{
-		switch (match->args[i].type)
-		{
-		case T_MATCH:
-			if (module_used_in_match(match->args[i].match.p, id))
-				return 1;
-			break;
-		case T_ACTION:
-			if (module_used_in_action(match->args[i].action.p, id))
-				return 1;
-			break;
-		}
-	}
-
-	return 0;
-}
-
-int
-module_used_in_action(userfw_action *action, userfw_module_id_t id)
-{
-	int i;
-
-	if (action->mod == id)
-		return 1;
-
-	for(i = 0; i < action->nargs; i++)
-	{
-		switch (action->args[i].type)
-		{
-		case T_MATCH:
-			if (module_used_in_match(action->args[i].match.p, id))
-				return 1;
-			break;
-		case T_ACTION:
-			if (module_used_in_action(action->args[i].action.p, id))
-				return 1;
-			break;
-		}
-	}
-
-	return 0;
-}
-
-int
-module_used(userfw_module_id_t id)
-{
-	userfw_rule *rule = global_rules.rule;
-
-	while(rule != NULL)
-	{
-		if (module_used_in_match(&(rule->match), id) ||
-				module_used_in_action(&(rule->action), id))
-			return 1;
-
-		rule = rule->next;
-	}
-
-	return 0;
 }
 
 const userfw_modinfo *
 userfw_mod_find(userfw_module_id_t id)
 {
-	struct modinfo_entry *m;
 	const userfw_modinfo *ret = NULL;
+	struct modinfo_entry *m;
 
 	rw_rlock(&userfw_modules_list_mtx);
-
-	SLIST_FOREACH(m, &userfw_modules_list, entries)
-	{
-		if (m->data->id == id)
-		{
-			ret = m->data;
-			break;
-		}
-	}
-	
+	m = userfw_mod_find_locked(id);
 	rw_runlock(&userfw_modules_list_mtx);
+
+	if (m != NULL)
+		ret = m->data;
 
 	return ret;
 }
@@ -269,4 +186,46 @@ userfw_mod_find_cmd(userfw_module_id_t mod, opcode_t id)
 	}
 
 	return NULL;
+}
+
+int
+userfw_mod_inc_refcount(userfw_module_id_t id)
+{
+	struct modinfo_entry *mod;
+	int err = 0;
+
+	rw_rlock(&userfw_modules_list_mtx);
+	mod = userfw_mod_find_locked(id);
+	if (mod == NULL)
+		err = ENOENT;
+	else
+	{
+		mtx_lock(&(mod->refcount_mtx));
+		mod->refcount++;
+		mtx_unlock(&(mod->refcount_mtx));
+	}
+	rw_runlock(&userfw_modules_list_mtx);
+
+	return err;
+}
+
+int
+userfw_mod_dec_refcount(userfw_module_id_t id)
+{
+	struct modinfo_entry *mod;
+	int err = 0;
+
+	rw_rlock(&userfw_modules_list_mtx);
+	mod = userfw_mod_find_locked(id);
+	if (mod == NULL)
+		err = ENOENT;
+	else
+	{
+		mtx_lock(&(mod->refcount_mtx));
+		mod->refcount--;
+		mtx_unlock(&(mod->refcount_mtx));
+	}
+	rw_runlock(&userfw_modules_list_mtx);
+
+	return err;
 }

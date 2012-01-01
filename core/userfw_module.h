@@ -33,11 +33,14 @@
 #include <sys/lock.h>
 #include <sys/rwlock.h>
 #include <sys/queue.h>
+#include <sys/mutex.h>
 
 struct modinfo_entry
 {
 	userfw_modinfo	*data;
 	SLIST_ENTRY(modinfo_entry) entries;
+	uint32_t	refcount;
+	struct mtx	refcount_mtx;
 };
 
 typedef SLIST_HEAD(__userfw_modules_head, modinfo_entry) userfw_modules_head_t;

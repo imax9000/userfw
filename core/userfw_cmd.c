@@ -193,18 +193,24 @@ parse_arg(unsigned char *buf, userfw_arg *dst)
 			if (matchdescr == NULL)
 				return EHOSTUNREACH;
 
-			match = malloc(sizeof(userfw_match), M_USERFW, M_WAITOK | M_ZERO);
+			if (userfw_mod_inc_refcount(mod_id) == 0)
+			{
+				match = malloc(sizeof(userfw_match), M_USERFW, M_WAITOK | M_ZERO);
 
-			match->mod = mod_id;
-			match->op = opcode;
-			match->nargs = matchdescr->nargs;
-			match->do_match = matchdescr->do_match;
+				match->mod = mod_id;
+				match->op = opcode;
+				match->nargs = matchdescr->nargs;
+				match->do_match = matchdescr->do_match;
 
-			err = parse_arg_list(data, arg->length - sizeof(*arg),
-					match->args, match->nargs, matchdescr->arg_types);
-			dst->match.p = match;
-			if (err != 0)
-				return err;
+				err = parse_arg_list(data, arg->length - sizeof(*arg),
+						match->args, match->nargs, matchdescr->arg_types);
+				dst->match.p = match;
+			}
+			else
+			{
+				err = EHOSTUNREACH;
+				dst->type = T_INVAL;
+			}
 			break;
 		case T_ACTION:
 			actiondescr = userfw_mod_find_action(mod_id, opcode);
@@ -212,20 +218,28 @@ parse_arg(unsigned char *buf, userfw_arg *dst)
 			if (actiondescr == NULL)
 				return EHOSTUNREACH;
 
-			action = malloc(sizeof(userfw_action), M_USERFW, M_WAITOK | M_ZERO);
+			if (userfw_mod_inc_refcount(mod_id) == 0)
+			{
+				action = malloc(sizeof(userfw_action), M_USERFW, M_WAITOK | M_ZERO);
 
-			action->mod = mod_id;
-			action->op = opcode;
-			action->nargs = actiondescr->nargs;
-			action->do_action = actiondescr->do_action;
+				action->mod = mod_id;
+				action->op = opcode;
+				action->nargs = actiondescr->nargs;
+				action->do_action = actiondescr->do_action;
 
-			err = parse_arg_list(data, arg->length - sizeof(*arg),
-					action->args, action->nargs, actiondescr->arg_types);
-			dst->action.p = action;
-			if (err != 0)
-				return err;
+				err = parse_arg_list(data, arg->length - sizeof(*arg),
+						action->args, action->nargs, actiondescr->arg_types);
+				dst->action.p = action;
+			}
+			else
+			{
+				err = EHOSTUNREACH;
+				dst->type = T_INVAL;
+			}
 			break;
 		}
+		if (err != 0)
+			return err;
 		}
 		break;
 	default:

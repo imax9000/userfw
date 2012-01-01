@@ -58,10 +58,12 @@ free_arg(userfw_arg *arg)
 		break;
 	case T_MATCH:
 		free_match_args(arg->match.p);
+		userfw_mod_dec_refcount(arg->action.p->mod);
 		free(arg->match.p, M_USERFW);
 		break;
 	case T_ACTION:
 		free_action_args(arg->action.p);
+		userfw_mod_dec_refcount(arg->match.p->mod);
 		free(arg->match.p, M_USERFW);
 		break;
 	}
