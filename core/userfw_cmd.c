@@ -93,7 +93,7 @@ userfw_cmd_dispatch(unsigned char *buf,
 	for(i = 0; i < cmdinfo->nargs; i++)
 	{
 		if (parsed_args[i].type != T_INVAL)
-			free_arg(&(parsed_args[i]));
+			free_arg(&(parsed_args[i]), M_USERFW);
 	}
 
 	free(parsed_args, M_USERFW);

@@ -31,40 +31,40 @@
 #include "userfw.h"
 
 void
-free_match_args(userfw_match *match)
+free_match_args(userfw_match *match, struct malloc_type *mtype)
 {
 	int i;
 
 	for(i = 0; i < match->nargs; i++)
-		free_arg(&(match->args[i]));
+		free_arg(&(match->args[i]), mtype);
 }
 
 void
-free_action_args(userfw_action *action)
+free_action_args(userfw_action *action, struct malloc_type *mtype)
 {
 	int i;
 
 	for(i = 0; i < action->nargs; i++)
-		free_arg(&(action->args[i]));
+		free_arg(&(action->args[i]), mtype);
 }
 
 void
-free_arg(userfw_arg *arg)
+free_arg(userfw_arg *arg, struct malloc_type *mtype)
 {
 	switch (arg->type)
 	{
 	case T_STRING:
-		free(arg->string.data, M_USERFW);
+		free(arg->string.data, mtype);
 		break;
 	case T_MATCH:
-		free_match_args(arg->match.p);
+		free_match_args(arg->match.p, mtype);
 		userfw_mod_dec_refcount(arg->action.p->mod);
-		free(arg->match.p, M_USERFW);
+		free(arg->match.p, mtype);
 		break;
 	case T_ACTION:
-		free_action_args(arg->action.p);
+		free_action_args(arg->action.p, mtype);
 		userfw_mod_dec_refcount(arg->match.p->mod);
-		free(arg->match.p, M_USERFW);
+		free(arg->match.p, mtype);
 		break;
 	}
 }

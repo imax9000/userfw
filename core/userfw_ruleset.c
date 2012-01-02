@@ -45,8 +45,8 @@ userfw_ruleset_uninit(userfw_ruleset *p)
 	while(current != NULL)
 	{
 		next = current->next;
-		free_match_args(&(current->match));
-		free_action_args(&(current->action));
+		free_match_args(&(current->match), M_USERFW);
+		free_action_args(&(current->action), M_USERFW);
 		free(current, M_USERFW);
 		current = next;
 	}

@@ -29,8 +29,9 @@
 
 #include <userfw/module.h>
 
-void free_match_args(userfw_match *);
-void free_action_args(userfw_action *);
-void free_arg(userfw_arg *);
+struct malloc_type;
+void free_match_args(userfw_match *, struct malloc_type *);
+void free_action_args(userfw_action *, struct malloc_type *);
+void free_arg(userfw_arg *, struct malloc_type *);
 
 #endif /* USERFW_UTIL_H */
