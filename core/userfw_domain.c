@@ -179,6 +179,19 @@ userfw_connect(struct socket *so,
 	return r;
 }
 
+static int
+userfw_disconnect(struct socket *so)
+{
+	int r = EOPNOTSUPP;
+
+	UFWDOMAIN_RLOCK;
+	if (ufwreqs != NULL && ufwreqs->pru_disconnect != NULL)
+		r = ufwreqs->pru_disconnect(so);
+	UFWDOMAIN_RUNLOCK;
+
+	return r;
+}
+
 
 #else /* I_AM_DOMAIN_STUB */
 
@@ -393,6 +406,18 @@ userfw_connect(struct socket *so,
 	return 0;
 }
 
+static int
+userfw_disconnect(struct socket *so)
+{
+	struct userfwpcb *pcb = sotopcb(so);
+
+	if (pcb == NULL)
+		return EINVAL;
+	pcb->module = 0; /* XXX: module with id == 0 should be always loaded */
+
+	return 0;
+}
+
 int
 userfw_domain_send_to_socket(struct socket *so, unsigned char *buf, size_t len)
 {
@@ -439,7 +464,8 @@ struct pr_usrreqs userfwreqs = {
 	.pru_attach = userfw_soattach,
 	.pru_detach = userfw_sodetach,
 	.pru_send = userfw_sosend,
-	.pru_connect = userfw_connect
+	.pru_connect = userfw_connect,
+	.pru_disconnect = userfw_disconnect
 };
 
 extern struct domain userfwdomain;
