@@ -104,6 +104,24 @@ userfw_io_find_block(unsigned char *buf, size_t len, uint32_t type, uint32_t sub
 #ifdef _KERNEL
 int userfw_domain_send_to_socket(struct socket *, unsigned char *, size_t);
 int userfw_domain_send_to_uid(uid_t, unsigned char *, size_t);
+
+struct userfw_io_block
+{
+	uint32_t	type;
+	uint32_t	subtype;
+	uint8_t	nargs;
+	struct userfw_io_block **args;
+	userfw_arg data;
+};
+
+struct malloc_type;
+
+struct userfw_io_block * userfw_msg_alloc_block(uint32_t type, uint32_t subtype, struct malloc_type *);
+struct userfw_io_block * userfw_msg_alloc_container(uint32_t type, uint32_t subtype, uint8_t nargs, struct malloc_type *);
+void userfw_msg_free(struct userfw_io_block *, struct malloc_type *);
+int userfw_msg_set_arg(struct userfw_io_block *parent, struct userfw_io_block *child, uint8_t pos);
+size_t	userfw_msg_calc_size(struct userfw_io_block *);
+int	userfw_msg_serialize(struct userfw_io_block *, unsigned char *, size_t);
 #endif /* _KERNEL */
 
 #endif /* USERFW_IO_H */
