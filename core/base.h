@@ -28,6 +28,8 @@
 #ifndef USERFW_MOD_BASE_H
 #define USERFW_MOD_BASE_H
 
+#include <userfw/types.h>
+
 #define	USERFW_BASE_MOD	0
 
 enum __base_actions
@@ -47,6 +49,12 @@ enum __base_matches
 	,M_OR
 	,M_AND
 	,M_NOT
+};
+
+enum __base_cmds
+{
+	CMD_MODLIST
+	,CMD_MODINFO
 };
 
 #endif /* USERFW_MOD_BASE_H */

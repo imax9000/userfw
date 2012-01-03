@@ -37,6 +37,8 @@
 #include <netinet/udp.h>
 #include <netinet/sctp.h>
 #include <sys/mbuf.h>
+#include "userfw_module.h"
+#include <userfw/io.h>
 
 static int
 action_allow(struct mbuf **mb, userfw_chk_args *args, userfw_action *a, userfw_cache *cache)
@@ -234,15 +236,179 @@ static userfw_match_descr base_matches[] = {
 	,{M_NOT,	1,	{T_MATCH},	"not",	match_invert}
 };
 
+static struct userfw_io_block *
+serialize_modinfo(const userfw_modinfo *modinfo, struct malloc_type *mtype)
+{
+	struct userfw_io_block *msg;
+
+	msg = userfw_msg_alloc_container(T_CONTAINER, ST_MOD_DESCR, 2, mtype);
+	userfw_msg_insert_string(msg, ST_NAME, modinfo->name, strnlen(modinfo->name, USERFW_NAME_LEN), 0, mtype);
+	userfw_msg_insert_uint32(msg, ST_MOD_ID, modinfo->id, 1, mtype);
+
+	return msg;
+}
+
+static int
+cmd_modlist(opcode_t op, uint32_t nargs, userfw_arg *args, struct socket *so, struct thread *th)
+{
+	struct modinfo_entry *modinfo;
+	int count = 0, i = 0;
+	struct userfw_io_block *msg;
+	unsigned char *buf;
+	size_t len;
+
+	rw_rlock(&userfw_modules_list_mtx);
+
+	SLIST_FOREACH(modinfo, &userfw_modules_list, entries)
+	{
+		count++;
+	}
+
+	msg = userfw_msg_alloc_container(T_CONTAINER, ST_MESSAGE, count+1, M_USERFW);
+	userfw_msg_set_arg(msg, userfw_msg_alloc_block(T_UINT32, ST_ERRNO, M_USERFW), i);
+	msg->args[i]->data.uint32.value = 0;
+	i++;
+
+	SLIST_FOREACH(modinfo, &userfw_modules_list, entries)
+	{
+		userfw_msg_set_arg(msg, serialize_modinfo(modinfo->data, M_USERFW), i);
+		i++;
+	}
+	rw_runlock(&userfw_modules_list_mtx);
+
+	len = userfw_msg_calc_size(msg);
+	buf = malloc(len, M_USERFW, M_WAITOK);
+	if (userfw_msg_serialize(msg, buf, len) > 0)
+	{
+		userfw_domain_send_to_socket(so, buf, len);
+	}
+	free(buf, M_USERFW);
+	userfw_msg_free(msg, M_USERFW);
+
+	return 0;
+}
+
+static struct userfw_io_block *
+serialize_op_info(uint32_t subtype, opcode_t opcode, const char *name, size_t namelen, int nargs, const uint8_t *argtypes, struct malloc_type *mtype)
+{
+	struct userfw_io_block *msg;
+	int i;
+
+	msg = userfw_msg_alloc_container(T_CONTAINER, subtype, nargs+2, mtype);
+	userfw_msg_insert_string(msg, ST_NAME, name, namelen, 0, mtype);
+	userfw_msg_insert_uint32(msg, ST_OPCODE, opcode, 1, mtype);
+
+	for(i = 0; i < nargs; i++)
+	{
+		userfw_msg_insert_uint32(msg, ST_ARGTYPE, argtypes[i], i+2, mtype);
+	}
+
+	return msg;
+}
+
+static struct userfw_io_block *
+serialize_modinfo_full(const userfw_modinfo *modinfo, struct malloc_type *mtype)
+{
+	struct userfw_io_block *msg;
+	int i, cur;
+
+	msg = userfw_msg_alloc_container(T_CONTAINER, ST_MOD_DESCR,
+		2 + modinfo->nactions + modinfo->nmatches + modinfo->ncmds, mtype);
+	userfw_msg_insert_string(msg, ST_NAME, modinfo->name, strnlen(modinfo->name, USERFW_NAME_LEN), 0, mtype);
+	userfw_msg_insert_uint32(msg, ST_MOD_ID, modinfo->id, 1, mtype);
+	cur = 2;
+	for(i = 0; i < modinfo->nactions; i++)
+	{
+		userfw_msg_set_arg(msg,
+			serialize_op_info(ST_ACTION_DESCR,
+				modinfo->actions[i].opcode,
+				modinfo->actions[i].name,
+				strnlen(modinfo->actions[i].name, USERFW_NAME_LEN),
+				modinfo->actions[i].nargs,
+				modinfo->actions[i].arg_types,
+				M_USERFW),
+			cur);
+		cur++;
+	}
+	for(i = 0; i < modinfo->nmatches; i++)
+	{
+		userfw_msg_set_arg(msg,
+			serialize_op_info(ST_MATCH_DESCR,
+				modinfo->matches[i].opcode,
+				modinfo->matches[i].name,
+				strnlen(modinfo->matches[i].name, USERFW_NAME_LEN),
+				modinfo->matches[i].nargs,
+				modinfo->matches[i].arg_types,
+				M_USERFW),
+			cur);
+		cur++;
+	}
+	for(i = 0; i < modinfo->ncmds; i++)
+	{
+		userfw_msg_set_arg(msg,
+			serialize_op_info(ST_CMD_DESCR,
+				modinfo->cmds[i].opcode,
+				modinfo->cmds[i].name,
+				strnlen(modinfo->cmds[i].name, USERFW_NAME_LEN),
+				modinfo->cmds[i].nargs,
+				modinfo->cmds[i].arg_types,
+				M_USERFW),
+			cur);
+		cur++;
+	}
+
+	return msg;
+}
+
+static int
+cmd_modinfo(opcode_t op, uint32_t nargs, userfw_arg *args, struct socket *so, struct thread *th)
+{
+	struct userfw_io_block *msg;
+	unsigned char *buf;
+	size_t len;
+	const userfw_modinfo *modinfo;
+	
+	modinfo = userfw_mod_find(args[0].uint32.value);
+
+	if (modinfo == NULL)
+	{
+		msg = userfw_msg_alloc_container(T_CONTAINER, ST_MESSAGE, 1, M_USERFW);
+		userfw_msg_insert_uint32(msg, ST_ERRNO, ENOENT, 0, M_USERFW);
+	}
+	else
+	{
+		msg = userfw_msg_alloc_container(T_CONTAINER, ST_MESSAGE, 2, M_USERFW);
+		userfw_msg_insert_uint32(msg, ST_ERRNO, 0, 0, M_USERFW);
+
+		userfw_msg_set_arg(msg, serialize_modinfo_full(modinfo, M_USERFW), 1);
+	}
+
+	len = userfw_msg_calc_size(msg);
+	buf = malloc(len, M_USERFW, M_WAITOK);
+	if (userfw_msg_serialize(msg, buf, len) > 0)
+	{
+		userfw_domain_send_to_socket(so, buf, len);
+	}
+	free(buf, M_USERFW);
+	userfw_msg_free(msg, M_USERFW);
+
+	return 0;	
+}
+
+static userfw_cmd_descr base_cmds[] = {
+	{CMD_MODLIST,	0,	{},	"modlist", cmd_modlist}
+	,{CMD_MODINFO,	0,	{T_UINT32}, "modinfo", cmd_modinfo}
+};
+
 static userfw_modinfo base_modinfo =
 {
 	.id = USERFW_BASE_MOD,
-	.nactions = 2,
-	.nmatches = 9,
-	.ncmds = 0,
+	.nactions = sizeof(base_actions)/sizeof(base_actions[0]),
+	.nmatches = sizeof(base_matches)/sizeof(base_matches[0]),
+	.ncmds = sizeof(base_cmds)/sizeof(base_cmds[0]),
 	.actions = base_actions,
 	.matches = base_matches,
-	.cmds = NULL,
+	.cmds = base_cmds,
 	.name = "base"
 };
 
