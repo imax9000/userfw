@@ -38,12 +38,6 @@
 #include <netinet/sctp.h>
 #include <sys/mbuf.h>
 
-enum __base_actions
-{
-	A_ALLOW
-	,A_DENY
-};
-
 static int
 action_allow(struct mbuf **mb, userfw_chk_args *args, userfw_action *a, userfw_cache *cache)
 {
@@ -59,19 +53,6 @@ action_deny(struct mbuf **mb, userfw_chk_args *args, userfw_action *a, userfw_ca
 static userfw_action_descr base_actions[] = {
 	{A_ALLOW,	0,	{},	"allow",	action_allow}
 	,{A_DENY,	0,	{},	"deny",	action_deny}
-};
-
-enum __base_matches
-{
-	M_IN = USERFW_IN
-	,M_OUT = USERFW_OUT
-	,M_SRCIPV4
-	,M_DSTIPV4
-	,M_SRCPORT
-	,M_DSTPORT
-	,M_OR
-	,M_AND
-	,M_NOT
 };
 
 static int

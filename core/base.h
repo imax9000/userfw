@@ -30,4 +30,23 @@
 
 #define	USERFW_BASE_MOD	0
 
+enum __base_actions
+{
+	A_ALLOW
+	,A_DENY
+};
+
+enum __base_matches
+{
+	M_IN = USERFW_IN
+	,M_OUT = USERFW_OUT
+	,M_SRCIPV4
+	,M_DSTIPV4
+	,M_SRCPORT
+	,M_DSTPORT
+	,M_OR
+	,M_AND
+	,M_NOT
+};
+
 #endif /* USERFW_MOD_BASE_H */
