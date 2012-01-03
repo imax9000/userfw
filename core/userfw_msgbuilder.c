@@ -69,7 +69,7 @@ userfw_msg_alloc_container(uint32_t type, uint32_t subtype, uint32_t nargs, stru
 	ret->type = type;
 	ret->subtype = subtype;
 	ret->nargs = nargs;
-	ret->args = malloc(sizeof(ret), mtype, M_WAITOK | M_ZERO);
+	ret->args = malloc(sizeof(ret)*nargs, mtype, M_WAITOK | M_ZERO);
 
 	return ret;
 }
@@ -78,6 +78,12 @@ void
 userfw_msg_free(struct userfw_io_block *p, struct malloc_type *mtype)
 {
 	int i;
+
+	if (p == NULL)
+	{
+		printf("userfw_msg_free(): p == NULL\n");
+		return;
+	}
 
 	if (is_container(p))
 	{
