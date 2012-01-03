@@ -61,7 +61,7 @@ userfw_msg_alloc_block(uint32_t type, uint32_t subtype, struct malloc_type *mtyp
 }
 
 struct userfw_io_block *
-userfw_msg_alloc_container(uint32_t type, uint32_t subtype, uint8_t nargs, struct malloc_type *mtype)
+userfw_msg_alloc_container(uint32_t type, uint32_t subtype, uint32_t nargs, struct malloc_type *mtype)
 {
 	struct userfw_io_block *ret;
 
@@ -95,7 +95,7 @@ userfw_msg_free(struct userfw_io_block *p, struct malloc_type *mtype)
 }
 
 int
-userfw_msg_set_arg(struct userfw_io_block *parent, struct userfw_io_block *child, uint8_t pos)
+userfw_msg_set_arg(struct userfw_io_block *parent, struct userfw_io_block *child, uint32_t pos)
 {
 	if (!is_container(parent) || pos >= parent->nargs)
 		return EINVAL;

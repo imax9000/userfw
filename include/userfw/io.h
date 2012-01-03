@@ -117,9 +117,9 @@ struct userfw_io_block
 struct malloc_type;
 
 struct userfw_io_block * userfw_msg_alloc_block(uint32_t type, uint32_t subtype, struct malloc_type *);
-struct userfw_io_block * userfw_msg_alloc_container(uint32_t type, uint32_t subtype, uint8_t nargs, struct malloc_type *);
+struct userfw_io_block * userfw_msg_alloc_container(uint32_t type, uint32_t subtype, uint32_t nargs, struct malloc_type *);
 void userfw_msg_free(struct userfw_io_block *, struct malloc_type *);
-int userfw_msg_set_arg(struct userfw_io_block *parent, struct userfw_io_block *child, uint8_t pos);
+int userfw_msg_set_arg(struct userfw_io_block *parent, struct userfw_io_block *child, uint32_t pos);
 size_t	userfw_msg_calc_size(struct userfw_io_block *);
 int	userfw_msg_serialize(struct userfw_io_block *, unsigned char *, size_t);
 #endif /* _KERNEL */
