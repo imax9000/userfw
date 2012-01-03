@@ -122,6 +122,10 @@ void userfw_msg_free(struct userfw_io_block *, struct malloc_type *);
 int userfw_msg_set_arg(struct userfw_io_block *parent, struct userfw_io_block *child, uint32_t pos);
 size_t	userfw_msg_calc_size(struct userfw_io_block *);
 int	userfw_msg_serialize(struct userfw_io_block *, unsigned char *, size_t);
+
+int userfw_msg_insert_uint16(struct userfw_io_block *parent, uint32_t subtype, uint16_t value, uint32_t pos, struct malloc_type *);
+int userfw_msg_insert_uint32(struct userfw_io_block *parent, uint32_t subtype, uint32_t value, uint32_t pos, struct malloc_type *);
+int userfw_msg_insert_string(struct userfw_io_block *parent, uint32_t subtype, const char *str, size_t len, uint32_t pos, struct malloc_type *);
 #endif /* _KERNEL */
 
 #endif /* USERFW_IO_H */

@@ -194,3 +194,29 @@ userfw_msg_serialize(struct userfw_io_block *p, unsigned char *buf, size_t len)
 	}
 	return block_len;
 }
+
+int
+userfw_msg_insert_uint16(struct userfw_io_block *msg, uint32_t subtype, uint16_t value, uint32_t pos, struct malloc_type *mtype)
+{
+	userfw_msg_set_arg(msg, userfw_msg_alloc_block(T_UINT16, subtype, mtype), pos);
+	msg->args[pos]->data.uint16.value = value;
+	return 0;
+}
+
+int
+userfw_msg_insert_uint32(struct userfw_io_block *msg, uint32_t subtype, uint32_t value, uint32_t pos, struct malloc_type *mtype)
+{
+	userfw_msg_set_arg(msg, userfw_msg_alloc_block(T_UINT32, subtype, mtype), pos);
+	msg->args[pos]->data.uint32.value = value;
+	return 0;
+}
+
+int
+userfw_msg_insert_string(struct userfw_io_block *msg, uint32_t subtype, const char *str, size_t len, uint32_t pos, struct malloc_type *mtype)
+{
+	userfw_msg_set_arg(msg, userfw_msg_alloc_block(T_STRING, subtype, mtype), pos);
+	msg->args[pos]->data.string.length = len;
+	msg->args[pos]->data.string.data = malloc(len, M_USERFW, M_WAITOK);
+	bcopy(str, msg->args[pos]->data.string.data, len);
+	return 0;
+}
