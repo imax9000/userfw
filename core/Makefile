@@ -12,5 +12,11 @@ SRCS=	userfw_mod.c \
 	base.c
 KMOD=	userfw
 CFLAGS+=	-I../include
+KMODDIR?=	/boot/modules
+PREFIX?=	/usr/local
+
+afterinstall:
+	${INSTALL} -d "${PREFIX}/include/userfw/modules"
+	${INSTALL} base.h "${PREFIX}/include/userfw/modules"
 
 .include <bsd.kmod.mk>
