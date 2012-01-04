@@ -57,8 +57,10 @@ extern userfw_ruleset global_rules;
 #define USERFW_INIT_LOCK(p, s)	rw_init(&((p)->mtx), (s))
 #define USERFW_UNINIT_LOCK(p)	rw_destroy(&((p)->mtx))
 
+struct malloc_type;
+
 void userfw_ruleset_init(userfw_ruleset *, const char *name);
-void userfw_ruleset_uninit(userfw_ruleset *);
+void userfw_ruleset_uninit(userfw_ruleset *, struct malloc_type *);
 
 int check_packet(struct mbuf **mb, userfw_chk_args *args, userfw_ruleset *ruleset);
 

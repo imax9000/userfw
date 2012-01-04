@@ -76,7 +76,7 @@ int userfw_uninit()
 	{
 		rw_destroy(&userfw_modules_list_mtx);
 
-		userfw_ruleset_uninit(&global_rules);
+		userfw_ruleset_uninit(&global_rules, M_USERFW);
 	}
 
 #if 0

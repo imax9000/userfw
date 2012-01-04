@@ -26,6 +26,8 @@
 
 #include <userfw/ruleset.h>
 #include "userfw_util.h"
+#include <sys/types.h>
+#include <sys/malloc.h>
 
 userfw_ruleset global_rules;
 
@@ -36,18 +38,26 @@ userfw_ruleset_init(userfw_ruleset *p, const char *name)
 	USERFW_INIT_LOCK(p, name);
 }
 
-void
-userfw_ruleset_uninit(userfw_ruleset *p)
+static void
+free_rule_chain(userfw_rule *p, struct malloc_type *mtype)
 {
-	userfw_rule *current = p->rule, *next;
-
-	USERFW_UNINIT_LOCK(p);
-	while(current != NULL)
+	userfw_rule *next;
+	while(p != NULL)
 	{
-		next = current->next;
-		free_match_args(&(current->match), M_USERFW);
-		free_action_args(&(current->action), M_USERFW);
-		free(current, M_USERFW);
-		current = next;
+		next = p->next;
+		free_match_args(&(p->match), mtype);
+		free_action_args(&(p->action), mtype);
+		free(p, mtype);
+		p = next;
+	}
+
+}
+
+void
+userfw_ruleset_uninit(userfw_ruleset *p, struct malloc_type *mtype)
+{
+	USERFW_UNINIT_LOCK(p);
+	free_rule_chain(p->rule, mtype);
+	{
 	}
 }
