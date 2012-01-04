@@ -226,3 +226,69 @@ userfw_msg_insert_string(struct userfw_io_block *msg, uint32_t subtype, const ch
 	bcopy(str, msg->args[pos]->data.string.data, len);
 	return 0;
 }
+
+int
+userfw_msg_insert_ipv4(struct userfw_io_block *msg, uint32_t subtype, uint32_t addr, uint32_t mask, uint32_t pos, struct malloc_type *mtype)
+{
+	userfw_msg_set_arg(msg, userfw_msg_alloc_block(T_IPv4, subtype, mtype), pos);
+	msg->args[pos]->data.ipv4.addr = addr;
+	msg->args[pos]->data.ipv4.mask = mask;
+	return 0;
+}
+
+int
+userfw_msg_insert_action(struct userfw_io_block *msg, uint32_t subtype, const userfw_action *action, uint32_t pos, struct malloc_type *mtype)
+{
+	int i;
+
+	userfw_msg_set_arg(msg, userfw_msg_alloc_container(T_ACTION, subtype, action->nargs + 2, mtype), pos);
+	userfw_msg_insert_uint32(msg->args[pos], ST_MOD_ID, action->mod, 0, mtype);
+	userfw_msg_insert_uint32(msg->args[pos], ST_OPCODE, action->op, 1, mtype);
+	for(i = 0; i < action->nargs; i++)
+	{
+		userfw_msg_insert_arg(msg->args[pos], ST_ARG, &(action->args[i]), i + 2, mtype);
+	}
+	return 0;
+}
+
+int
+userfw_msg_insert_match(struct userfw_io_block *msg, uint32_t subtype, const userfw_match *match, uint32_t pos, struct malloc_type *mtype)
+{
+	int i;
+
+	userfw_msg_set_arg(msg, userfw_msg_alloc_container(T_MATCH, subtype, match->nargs + 2, mtype), pos);
+	userfw_msg_insert_uint32(msg->args[pos], ST_MOD_ID, match->mod, 0, mtype);
+	userfw_msg_insert_uint32(msg->args[pos], ST_OPCODE, match->op, 1, mtype);
+	for(i = 0; i < match->nargs; i++)
+	{
+		userfw_msg_insert_arg(msg->args[pos], ST_ARG, &(match->args[i]), i + 2, mtype);
+	}
+	return 0;
+}
+
+int
+userfw_msg_insert_arg(struct userfw_io_block *msg, uint32_t subtype, const userfw_arg *arg, uint32_t pos, struct malloc_type *mtype)
+{
+	switch(arg->type)
+	{
+	case T_STRING:
+		userfw_msg_insert_string(msg, subtype, arg->string.data, arg->string.length, pos, mtype);
+		break;
+	case T_UINT16:
+		userfw_msg_insert_uint16(msg, subtype, arg->uint16.value, pos, mtype);
+		break;
+	case T_UINT32:
+		userfw_msg_insert_uint32(msg, subtype, arg->uint32.value, pos, mtype);
+		break;
+	case T_IPv4:
+		userfw_msg_insert_ipv4(msg, subtype, arg->ipv4.addr, arg->ipv4.mask, pos, mtype);
+		break;
+	case T_MATCH:
+		userfw_msg_insert_match(msg, subtype, arg->match.p, pos, mtype);
+		break;
+	case T_ACTION:
+		userfw_msg_insert_action(msg, subtype, arg->action.p, pos, mtype);
+		break;
+	}
+	return 0;
+}
