@@ -55,6 +55,9 @@ enum __base_cmds
 {
 	CMD_MODLIST
 	,CMD_MODINFO
+	,CMD_LIST_RULESET
+	,CMD_DELETE_RULE
+	,CMD_INSERT_RULE
 };
 
 #endif /* USERFW_MOD_BASE_H */
