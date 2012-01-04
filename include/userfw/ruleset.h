@@ -32,6 +32,7 @@
 #include <sys/lock.h>
 #include <sys/rwlock.h>
 #include <userfw/module.h>
+#include <userfw/io.h>
 
 typedef struct __userfw_rule
 {
@@ -61,6 +62,19 @@ struct malloc_type;
 
 void userfw_ruleset_init(userfw_ruleset *, const char *name);
 void userfw_ruleset_uninit(userfw_ruleset *, struct malloc_type *);
+
+/** Inserts single rule */
+int userfw_ruleset_insert_rule(userfw_ruleset *, userfw_rule *);
+
+/** Deletes single rule */
+int userfw_ruleset_delete_rule(userfw_ruleset *, int, struct malloc_type *);
+
+/** Replaces whole ruleset with new chain of rules and drops old chain */
+int userfw_ruleset_replace(userfw_ruleset *, userfw_rule *head, struct malloc_type *);
+
+/** Serialize ruleset or rule to buffer, return actual size or -(error code) */
+struct userfw_io_block * userfw_ruleset_serialize(userfw_ruleset *, struct malloc_type *);
+struct userfw_io_block * userfw_ruleset_serialize_rule(userfw_rule *, struct malloc_type *);
 
 int check_packet(struct mbuf **mb, userfw_chk_args *args, userfw_ruleset *ruleset);
 
