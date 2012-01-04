@@ -397,7 +397,7 @@ cmd_modinfo(opcode_t op, uint32_t nargs, userfw_arg *args, struct socket *so, st
 
 static userfw_cmd_descr base_cmds[] = {
 	{CMD_MODLIST,	0,	{},	"modlist", cmd_modlist}
-	,{CMD_MODINFO,	0,	{T_UINT32}, "modinfo", cmd_modinfo}
+	,{CMD_MODINFO,	1,	{T_UINT32}, "modinfo", cmd_modinfo}
 };
 
 static userfw_modinfo base_modinfo =
