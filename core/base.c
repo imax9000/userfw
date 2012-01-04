@@ -249,7 +249,7 @@ serialize_modinfo(const userfw_modinfo *modinfo, struct malloc_type *mtype)
 }
 
 static int
-cmd_modlist(opcode_t op, uint32_t nargs, userfw_arg *args, struct socket *so, struct thread *th)
+cmd_modlist(opcode_t op, uint32_t cookie, userfw_arg *args, struct socket *so, struct thread *th)
 {
 	struct modinfo_entry *modinfo;
 	int count = 0, i = 0;
@@ -264,10 +264,10 @@ cmd_modlist(opcode_t op, uint32_t nargs, userfw_arg *args, struct socket *so, st
 		count++;
 	}
 
-	msg = userfw_msg_alloc_container(T_CONTAINER, ST_MESSAGE, count+1, M_USERFW);
-	userfw_msg_set_arg(msg, userfw_msg_alloc_block(T_UINT32, ST_ERRNO, M_USERFW), i);
-	msg->args[i]->data.uint32.value = 0;
-	i++;
+	msg = userfw_msg_alloc_container(T_CONTAINER, ST_MESSAGE, count+2, M_USERFW);
+	userfw_msg_insert_uint32(msg, ST_ERRNO, 0, 0, M_USERFW);
+	userfw_msg_insert_uint32(msg, ST_COOKIE, cookie, 1, M_USERFW);
+	i = 2;
 
 	SLIST_FOREACH(modinfo, &userfw_modules_list, entries)
 	{
@@ -361,7 +361,7 @@ serialize_modinfo_full(const userfw_modinfo *modinfo, struct malloc_type *mtype)
 }
 
 static int
-cmd_modinfo(opcode_t op, uint32_t nargs, userfw_arg *args, struct socket *so, struct thread *th)
+cmd_modinfo(opcode_t op, uint32_t cookie, userfw_arg *args, struct socket *so, struct thread *th)
 {
 	struct userfw_io_block *msg;
 	unsigned char *buf;
@@ -372,15 +372,17 @@ cmd_modinfo(opcode_t op, uint32_t nargs, userfw_arg *args, struct socket *so, st
 
 	if (modinfo == NULL)
 	{
-		msg = userfw_msg_alloc_container(T_CONTAINER, ST_MESSAGE, 1, M_USERFW);
+		msg = userfw_msg_alloc_container(T_CONTAINER, ST_MESSAGE, 2, M_USERFW);
 		userfw_msg_insert_uint32(msg, ST_ERRNO, ENOENT, 0, M_USERFW);
+		userfw_msg_insert_uint32(msg, ST_COOKIE, cookie, 1, M_USERFW);
 	}
 	else
 	{
-		msg = userfw_msg_alloc_container(T_CONTAINER, ST_MESSAGE, 2, M_USERFW);
+		msg = userfw_msg_alloc_container(T_CONTAINER, ST_MESSAGE, 3, M_USERFW);
 		userfw_msg_insert_uint32(msg, ST_ERRNO, 0, 0, M_USERFW);
+		userfw_msg_insert_uint32(msg, ST_COOKIE, cookie, 1, M_USERFW);
 
-		userfw_msg_set_arg(msg, serialize_modinfo_full(modinfo, M_USERFW), 1);
+		userfw_msg_set_arg(msg, serialize_modinfo_full(modinfo, M_USERFW), 2);
 	}
 
 	len = userfw_msg_calc_size(msg);
