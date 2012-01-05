@@ -43,14 +43,16 @@
 #include "userfw_util.h"
 
 static int
-action_allow(struct mbuf **mb, userfw_chk_args *args, userfw_action *a, userfw_cache *cache)
+action_allow(struct mbuf **mb, userfw_chk_args *args, userfw_action *a, userfw_cache *cache, int *continue_)
 {
+	*continue_ = 0;
 	return 0;
 }
 
 static int
-action_deny(struct mbuf **mb, userfw_chk_args *args, userfw_action *a, userfw_cache *cache)
+action_deny(struct mbuf **mb, userfw_chk_args *args, userfw_action *a, userfw_cache *cache, int *continue_)
 {
+	*continue_ = 0;
 	return EACCES;
 }
 

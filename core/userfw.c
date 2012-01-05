@@ -98,7 +98,7 @@ check_packet(struct mbuf **mb, userfw_chk_args *args, userfw_ruleset *ruleset)
 {
 	userfw_rule *rule = ruleset->rule;
 	userfw_cache cache;
-	int ret, matched = 0;
+	int ret, matched = 0, continue_ = 0;
 
 	userfw_cache_init(&cache);
 
@@ -110,9 +110,12 @@ check_packet(struct mbuf **mb, userfw_chk_args *args, userfw_ruleset *ruleset)
 		{
 			if ((*mb) == NULL)
 				return EACCES;
-			ret = rule->action.do_action(mb, args, &(rule->action), &cache);
-			matched = 1;
-			break;
+			ret = rule->action.do_action(mb, args, &(rule->action), &cache, &continue_);
+			if (continue_ == 0)
+			{
+				matched = 1;
+				break;
+			}
 		}
 		if ((*mb) == NULL)
 			return EACCES;
