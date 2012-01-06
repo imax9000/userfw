@@ -213,9 +213,10 @@ struct userfwpcb
 	uid_t	uid;
 };
 
-/* TODO: make sysctl variables for so{rcv,snd}space */
 static unsigned long sorcvspace = 8192;
 static unsigned long sosndspace = 8192;
+SYSCTL_ULONG(_net_userfw, OID_AUTO, rcvspace, CTLFLAG_RW, &sorcvspace, 8192, "AF_USERFW socket receive space");
+SYSCTL_ULONG(_net_userfw, OID_AUTO, sndspace, CTLFLAG_RW, &sosndspace, 8192, "AF_USERFW socket send space");
 
 #define sotopcb(so)	((struct userfwpcb *)((so)->so_pcb))
 

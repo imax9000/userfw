@@ -34,6 +34,7 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/sysctl.h>
 
 struct mbuf;
 struct thread;
@@ -49,6 +50,8 @@ MALLOC_DECLARE(M_USERFW);
 #define SI_SUB_USERFW	SI_SUB_PROTO_IFATTACHDOMAIN
 #define SI_ORDER_USERFW_CORE	(SI_ORDER_ANY-1)
 #define SI_ORDER_USERFW_MOD	(SI_ORDER_USERFW_CORE+1)
+
+SYSCTL_DECL(_net_userfw);
 
 typedef struct __userfw_chk_args
 {

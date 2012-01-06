@@ -38,8 +38,10 @@
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/sctp.h>
+#include <sys/sysctl.h>
 
 MALLOC_DEFINE(M_USERFW, "userfw", "Memory for userfw rules and cache");
+SYSCTL_NODE(_net, OID_AUTO, userfw, CTLFLAG_RW, 0, "userfw parameters");
 
 int userfw_init()
 {
