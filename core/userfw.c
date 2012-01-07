@@ -43,6 +43,26 @@
 MALLOC_DEFINE(M_USERFW, "userfw", "Memory for userfw rules and cache");
 SYSCTL_NODE(_net, OID_AUTO, userfw, CTLFLAG_RW, 0, "userfw parameters");
 
+#define MTAG_USERFW_CALL_STACK	1325855656
+
+struct call_stack_entry
+{
+	SLIST_ENTRY(call_stack_entry)	next;
+	userfw_ruleset *ruleset;
+	uint16_t	rule_number;
+};
+
+struct call_stack_mtag
+{
+	struct m_tag	tag;
+	SLIST_HEAD(call_stack_head, call_stack_entry) call_stack;
+};
+
+static struct call_stack_entry * get_stack_entry(struct mbuf *m, userfw_ruleset *ruleset);
+static int is_top_of_stack(struct mbuf *m, userfw_ruleset *ruleset);
+static struct call_stack_entry * add_to_stack(struct mbuf *m, userfw_ruleset *ruleset);
+static int remove_from_stack(struct mbuf *m, struct call_stack_entry *entry);
+
 int userfw_init()
 {
 	int err = 0;
@@ -100,14 +120,36 @@ check_packet(struct mbuf **mb, userfw_chk_args *args, userfw_ruleset *ruleset)
 {
 	userfw_rule *rule = ruleset->rule;
 	userfw_cache cache;
-	int ret, matched = 0, continue_ = 0;
+	int ret = 0, matched = 0, continue_ = 0, packet_seen = 1;
+	struct call_stack_entry *cs_entry = NULL;
+
+	cs_entry = get_stack_entry(*mb, ruleset);
+	if (cs_entry == NULL)
+	{
+		cs_entry = add_to_stack(*mb, ruleset);
+		if (cs_entry != NULL)
+			cs_entry->rule_number = 0;
+	}
+	else
+		packet_seen = 1;
 
 	userfw_cache_init(&cache);
 
 	USERFW_RLOCK(ruleset);
 
+	if (packet_seen && cs_entry != NULL)
+	{
+		while(rule != NULL && rule->number < cs_entry->rule_number)
+			rule = rule->next;
+		if (rule != NULL && is_top_of_stack(*mb, ruleset) &&
+				rule->number == cs_entry->rule_number)
+			rule = rule->next;
+	}
+
 	while(rule != NULL)
 	{
+		if (cs_entry != NULL)
+			cs_entry->rule_number = rule->number;
 		if (rule->match.do_match(mb, args, &(rule->match), &cache))
 		{
 			if ((*mb) == NULL)
@@ -132,6 +174,8 @@ check_packet(struct mbuf **mb, userfw_chk_args *args, userfw_ruleset *ruleset)
 
 	USERFW_RUNLOCK(ruleset);
 
+	remove_from_stack(*mb, cs_entry);
+
 	if (!matched)
 #ifdef USERFW_DEFAULT_TO_DENY
 		ret = EACCES;
@@ -142,4 +186,99 @@ check_packet(struct mbuf **mb, userfw_chk_args *args, userfw_ruleset *ruleset)
 	userfw_cache_cleanup(&cache);
 
 	return ret;
+}
+
+static struct call_stack_entry *
+get_stack_entry(struct mbuf *m, userfw_ruleset *ruleset)
+{
+	struct call_stack_mtag *mtag;
+	struct call_stack_entry *entry = NULL;
+
+	mtag = (struct call_stack_mtag *)m_tag_locate(m, MTAG_USERFW_CALL_STACK, 0, NULL);
+	if (mtag != NULL)
+	{
+		SLIST_FOREACH(entry, &(mtag->call_stack), next)
+		{
+			if (entry->ruleset == ruleset)
+				return entry;
+		}
+	}
+	return NULL;
+}
+
+static int
+is_top_of_stack(struct mbuf *m, userfw_ruleset *ruleset)
+{
+	struct call_stack_mtag *mtag;
+
+	mtag = (struct call_stack_mtag *)m_tag_locate(m, MTAG_USERFW_CALL_STACK, 0, NULL);
+	if (mtag != NULL && SLIST_FIRST(&(mtag->call_stack))->ruleset == ruleset)
+		return 1;
+	return 0;
+}
+
+static void
+free_call_stack(struct m_tag *tag)
+{
+	struct call_stack_mtag *mtag = (struct call_stack_mtag *)tag;
+	struct call_stack_entry *entry;
+
+	while(!SLIST_EMPTY(&(mtag->call_stack)))
+	{
+		entry = SLIST_FIRST(&(mtag->call_stack));
+		SLIST_REMOVE_HEAD(&(mtag->call_stack), next);
+		free(entry, M_USERFW);
+	}
+}
+
+static struct call_stack_mtag *
+init_call_stack(struct mbuf *m)
+{
+	struct call_stack_mtag *mtag;
+
+	mtag = (struct call_stack_mtag *)m_tag_alloc(MTAG_USERFW_CALL_STACK, 0, sizeof(struct call_stack_mtag), M_NOWAIT);
+	if (mtag != NULL)
+	{
+		SLIST_INIT(&(mtag->call_stack));
+		mtag->tag.m_tag_free = free_call_stack;
+		m_tag_prepend(m, &(mtag->tag));
+	}
+	return mtag;
+}
+
+/* Return value can be null if malloc(9) failed to allocate memory */
+static struct call_stack_entry *
+add_to_stack(struct mbuf *m, userfw_ruleset *ruleset)
+{
+	struct call_stack_mtag *mtag;
+	struct call_stack_entry *entry = NULL;
+
+	mtag = (struct call_stack_mtag *)m_tag_locate(m, MTAG_USERFW_CALL_STACK, 0, NULL);
+	if (mtag == NULL)
+		mtag = init_call_stack(m);
+	if (mtag != NULL)
+	{
+		entry = malloc(sizeof(*entry), M_USERFW, M_NOWAIT);
+		if (entry != NULL)
+		{
+			entry->ruleset = ruleset;
+			SLIST_INSERT_HEAD(&(mtag->call_stack), entry, next);
+		}
+	}
+	return entry;
+}
+
+static int
+remove_from_stack(struct mbuf *m, struct call_stack_entry *entry)
+{
+	
+	struct call_stack_mtag *mtag;
+
+	mtag = (struct call_stack_mtag *)m_tag_locate(m, MTAG_USERFW_CALL_STACK, 0, NULL);
+	if (mtag != NULL)
+	{
+		SLIST_REMOVE(&(mtag->call_stack), entry, call_stack_entry, next);
+		free(entry, M_USERFW);
+	}
+	return 0;
 }
