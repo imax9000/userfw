@@ -227,7 +227,7 @@ free_call_stack(struct m_tag *tag)
 	{
 		entry = SLIST_FIRST(&(mtag->call_stack));
 		SLIST_REMOVE_HEAD(&(mtag->call_stack), next);
-		free(entry, M_USERFW);
+		free(entry, M_TEMP);
 	}
 }
 
@@ -258,7 +258,7 @@ add_to_stack(struct mbuf *m, userfw_ruleset *ruleset)
 		mtag = init_call_stack(m);
 	if (mtag != NULL)
 	{
-		entry = malloc(sizeof(*entry), M_USERFW, M_NOWAIT);
+		entry = malloc(sizeof(*entry), M_TEMP, M_NOWAIT);
 		if (entry != NULL)
 		{
 			entry->ruleset = ruleset;
@@ -271,14 +271,13 @@ add_to_stack(struct mbuf *m, userfw_ruleset *ruleset)
 static int
 remove_from_stack(struct mbuf *m, struct call_stack_entry *entry)
 {
-	
 	struct call_stack_mtag *mtag;
 
 	mtag = (struct call_stack_mtag *)m_tag_locate(m, MTAG_USERFW_CALL_STACK, 0, NULL);
 	if (mtag != NULL)
 	{
 		SLIST_REMOVE(&(mtag->call_stack), entry, call_stack_entry, next);
-		free(entry, M_USERFW);
+		free(entry, M_TEMP);
 	}
 	return 0;
 }
