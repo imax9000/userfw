@@ -111,7 +111,10 @@ check_packet(struct mbuf **mb, userfw_chk_args *args, userfw_ruleset *ruleset)
 		if (rule->match.do_match(mb, args, &(rule->match), &cache))
 		{
 			if ((*mb) == NULL)
-				return EACCES;
+			{
+				ret = EACCES;
+				break;
+			}
 			ret = rule->action.do_action(mb, args, &(rule->action), &cache, &continue_);
 			if (continue_ == 0)
 			{
@@ -120,7 +123,10 @@ check_packet(struct mbuf **mb, userfw_chk_args *args, userfw_ruleset *ruleset)
 			}
 		}
 		if ((*mb) == NULL)
-			return EACCES;
+		{
+			ret = EACCES;
+			break;
+		}
 		rule = rule->next;
 	}
 
