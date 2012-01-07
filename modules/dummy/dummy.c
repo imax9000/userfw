@@ -7,7 +7,7 @@
 #include "dummy.h"
 
 static int
-cmd_echo(opcode_t op, uint32_t nargs, userfw_arg *args, struct socket *so, struct thread *td)
+cmd_echo(opcode_t op, uint32_t cookie, userfw_arg *args, struct socket *so, struct thread *td)
 {
 	struct userfw_io_block *msg;
 	unsigned char *buf;
@@ -15,15 +15,13 @@ cmd_echo(opcode_t op, uint32_t nargs, userfw_arg *args, struct socket *so, struc
 	int err;
 
 	/* Allocate container for reply */
-	msg = userfw_msg_alloc_container(T_CONTAINER, ST_MESSAGE, 1, M_USERFW);
+	msg = userfw_msg_alloc_container(T_CONTAINER, ST_MESSAGE, 2, M_USERFW);
 
-	/* Allocate string block and add it as first child for msg */
-	userfw_msg_set_arg(msg, userfw_msg_alloc_block(T_STRING, ST_UNSPEC, M_USERFW), 0);
+	/* Insert cookie as first sub-block */
+	userfw_msg_insert_uint32(msg, ST_COOKIE, cookie, 0, M_USERFW);
 
-	/* Allocate memory for string itself and copy data from argument */
-	msg->args[0]->data.string.data = malloc(args[0].string.length, M_USERFW, M_WAITOK);
-	msg->args[0]->data.string.length = args[0].string.length;
-	bcopy(args[0].string.data, msg->args[0]->data.string.data, args[0].string.length);
+	/* Insert received string as second sub-block */
+	userfw_msg_insert_string(msg, ST_UNSPEC, args[0].string.data, args[0].string.length, 1, M_USERFW);
 
 	/* Serialize constructed message into buffer */
 	len = userfw_msg_calc_size(msg);
