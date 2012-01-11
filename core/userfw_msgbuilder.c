@@ -222,7 +222,7 @@ userfw_msg_insert_string(struct userfw_io_block *msg, uint32_t subtype, const ch
 {
 	userfw_msg_set_arg(msg, userfw_msg_alloc_block(T_STRING, subtype, mtype), pos);
 	msg->args[pos]->data.string.length = len;
-	msg->args[pos]->data.string.data = malloc(len, M_USERFW, M_WAITOK);
+	msg->args[pos]->data.string.data = malloc(len, mtype, M_WAITOK);
 	bcopy(str, msg->args[pos]->data.string.data, len);
 	return 0;
 }
