@@ -324,7 +324,7 @@ userfw_find_ ## x ## _in_module(const struct userfw_modinfo *m, const char *name
 	int i, ret = 0; \
 	for(i = 0; i < m->n ## y; i++) \
 	{ \
-		if (memcmp(name, m->y[i].name, MIN(len, USERFW_NAME_LEN)) \
+		if (memcmp(name, m->y[i].name, MIN(len, USERFW_NAME_LEN)) == 0 \
 			&& (len >= USERFW_NAME_LEN || m->y[i].name[len] == '\0')) \
 		{ \
 			*dst = &(m->y[i]); \
