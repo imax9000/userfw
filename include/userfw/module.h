@@ -61,6 +61,8 @@ typedef struct __userfw_chk_args
 	struct inpcb	*inpcb;
 } userfw_chk_args;
 
+#endif /* _KERNEL */
+
 typedef struct __userfw_match userfw_match;
 typedef struct __userfw_action userfw_action;
 
@@ -100,6 +102,7 @@ typedef union __userfw_arg
 		userfw_action *p;
 	} action;
 } userfw_arg;
+#ifdef _KERNEL
 
 typedef int (*userfw_match_fn)(struct mbuf **, userfw_chk_args *, userfw_match *, userfw_cache *);
 typedef int (*userfw_action_fn)(struct mbuf **, userfw_chk_args *, userfw_action *, userfw_cache *, int *);

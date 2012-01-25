@@ -101,10 +101,6 @@ userfw_io_find_block(unsigned char *buf, size_t len, uint32_t type, uint32_t sub
 #define to_io(t)	((struct userfw_io_header *)(t))
 #define BLOCK_FITS_INTO_OUTER(inner, outer)	((outer) < (inner) && to_io(inner)->length <= to_io(outer)->length - ((char*)(inner) - (char*)(outer)))
 
-#ifdef _KERNEL
-int userfw_domain_send_to_socket(struct socket *, unsigned char *, size_t);
-int userfw_domain_send_to_uid(uid_t, unsigned char *, size_t);
-
 struct userfw_io_block
 {
 	uint32_t	type;
@@ -113,6 +109,10 @@ struct userfw_io_block
 	struct userfw_io_block **args;
 	userfw_arg data;
 };
+
+#ifdef _KERNEL
+int userfw_domain_send_to_socket(struct socket *, unsigned char *, size_t);
+int userfw_domain_send_to_uid(uid_t, unsigned char *, size_t);
 
 struct malloc_type;
 
