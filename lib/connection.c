@@ -24,10 +24,21 @@
  * SUCH DAMAGE.
  */
 
-#include "connection.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
+#include <errno.h>
+#include <stdio.h>
+#include <strings.h>
 #include <userfw/io.h>
+#include "connection.h"
+#ifdef LIB_SEPARATE_BUILD
+#include <userfw/modules/base.h>
+#else
+#include "../core/base.h"
+#endif
+
+#define MSG_SIZE_WARN	1024*1024
 
 struct userfw_connection *
 userfw_connect()
@@ -65,4 +76,147 @@ userfw_disconnect(struct userfw_connection *c)
 	}
 
 	return ret;
+}
+
+int
+userfw_send(struct userfw_connection *c, unsigned char *buf, size_t len)
+{
+	int written = 0, ret = 0;
+
+	while(written < len)
+	{
+		if ((ret = write(c->fd, buf + written, len - written)) > 0)
+		{
+			written += ret;
+		}
+		else
+		{
+			if (errno != EAGAIN)
+			{
+				written = -1;
+				break;
+			}
+		}
+	}
+
+	return written;
+}
+
+int
+userfw_send_to(struct userfw_connection *c, unsigned char *buf, size_t len, userfw_module_id_t dst)
+{
+	struct sockaddr_userfw addr;
+
+	if (c == NULL)
+		return -1;
+
+	addr.sa_len = sizeof(addr);
+	addr.sa_family = AF_USERFW;
+	addr.module = dst;
+	if (connect(c->fd, (struct sockaddr*)(&addr), sizeof(addr)) == 0)
+	{
+		c->last_mod = dst;
+		return userfw_send(c, buf, len);
+	}
+
+	return -1;
+}
+
+int
+userfw_send_modlist_cmd(struct userfw_connection *c)
+{
+	struct userfw_io_block *msg = NULL;
+	unsigned char *buf = NULL;
+	int ret = -1, len;
+
+	msg = userfw_msg_alloc_container(T_CONTAINER, ST_CMDCALL, 1);
+	if (msg != NULL)
+	{
+		if ((errno = userfw_msg_insert_uint32(msg, ST_OPCODE, CMD_MODLIST, 0)) == 0)
+		{
+			len = userfw_msg_calc_size(msg);
+			buf = malloc(len);
+			if (buf != NULL)
+			{
+				userfw_msg_serialize(msg, buf, len);
+				ret = userfw_send_to(c, buf, len, USERFW_BASE_MOD) > 0 ? 0 : -1;
+				free(buf);
+			}
+		}
+		userfw_msg_free(msg);
+	}
+
+	return ret;
+}
+
+int
+userfw_send_modinfo_cmd(struct userfw_connection *c, userfw_module_id_t mod)
+{
+	struct userfw_io_block *msg = NULL;
+	unsigned char *buf = NULL;
+	int ret = -1, len;
+
+	msg = userfw_msg_alloc_container(T_CONTAINER, ST_CMDCALL, 2);
+	if (msg != NULL)
+	{
+		if ((errno = userfw_msg_insert_uint32(msg, ST_OPCODE, CMD_MODINFO, 0)) == 0 &&
+				(errno = userfw_msg_insert_uint32(msg, ST_ARG, mod, 1)) == 0)
+		{
+			len = userfw_msg_calc_size(msg);
+			buf = malloc(len);
+			if (buf != NULL)
+			{
+				userfw_msg_serialize(msg, buf, len);
+				ret = userfw_send_to(c, buf, len, USERFW_BASE_MOD) > 0 ? 0 : -1;
+				free(buf);
+			}
+		}
+		userfw_msg_free(msg);
+	}
+
+	return ret;
+}
+
+static ssize_t
+read_(int fd, void *buf_, size_t nbytes)
+{
+	char *buf = buf_;
+	size_t ret = 0, bytes_read = 0;
+
+	while(bytes_read < nbytes)
+	{
+		ret = read(fd, buf + bytes_read, nbytes - bytes_read);
+		if (ret > 0)
+			bytes_read += ret;
+		else if (errno != EAGAIN)
+			break;
+	}
+
+	return bytes_read;
+}
+
+struct userfw_io_block *
+userfw_recv_msg(struct userfw_connection *c)
+{
+	struct userfw_io_header hdr;
+	struct userfw_io_block *msg = NULL;
+	unsigned char *buf;
+	size_t ret;
+
+	ret = read_(c->fd, (void*)(&hdr), sizeof(hdr));
+	if (ret > 0)
+	{
+		if (hdr.length >= MSG_SIZE_WARN)
+			fprintf(stderr, "userfw_recv_msg: Warning: incoming message size == %zu\n", hdr.length);
+		buf = malloc(hdr.length);
+		if (buf != NULL)
+		{
+			bcopy(&hdr, buf, sizeof(hdr));
+			ret = read_(c->fd, buf + sizeof(hdr), hdr.length - sizeof(hdr));
+			msg = userfw_msg_parse(buf, hdr.length);
+			free(buf);
+		}
+	}
+
+	return msg;
 }
