@@ -156,7 +156,7 @@ userfw_msg_calc_size(struct userfw_io_block *p)
 	}
 	else if (p->type == T_STRING)
 	{
-		ret += sizeof(uint16_t) + p->data.string.length;
+		ret += p->data.string.length;
 	}
 	else
 		ret += type_size(p->type);
@@ -195,8 +195,7 @@ userfw_msg_serialize(struct userfw_io_block *p, unsigned char *buf, size_t len)
 		switch(p->type)
 		{
 		case T_STRING:
-			*((uint16_t*)data) = p->data.string.length;
-			bcopy(p->data.string.data, data + sizeof(uint16_t), p->data.string.length);
+			bcopy(p->data.string.data, data, p->data.string.length);
 			break;
 		case T_UINT16:
 			*((uint16_t*)data) = p->data.uint16.value;
@@ -381,17 +380,16 @@ userfw_msg_parse(unsigned char *buf, size_t len)
 	switch(hdr->type)
 	{
 	case T_STRING:
-		if (hdr->length < sizeof(*hdr) + sizeof(uint16_t) ||
-				hdr->length != sizeof(*hdr) + sizeof(uint16_t) + (*((uint16_t*)data)))
+		if (hdr->length < sizeof(*hdr))
 			break;
 		ret = userfw_msg_alloc_block(hdr->type, hdr->subtype);
 		if (ret != NULL)
 		{
 			ret->data.type = T_STRING;
-			ret->data.string.length = *((uint16_t*)data);
+			ret->data.string.length = hdr->length - sizeof(*hdr);
 			if ((ret->data.string.data = malloc(ret->data.string.length)) != NULL)
 			{
-				bcopy(data + sizeof(uint16_t), ret->data.string.data, ret->data.string.length);
+				bcopy(data, ret->data.string.data, ret->data.string.length);
 			}
 			else
 			{
