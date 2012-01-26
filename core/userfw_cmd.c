@@ -107,11 +107,11 @@ parse_arg_list(unsigned char *buf, int len, userfw_arg *dst, int count, uint8_t 
 	struct userfw_io_header *arg = (struct userfw_io_header *)buf;
 	int err = 0, i;
 
-	if (len < sizeof(*arg))
-		return EINVAL;
-
 	for(i = 0; i < count; i++)
 	{
+		if (len < sizeof(*arg))
+			return EINVAL;
+
 		if (arg->subtype == ST_ARG)
 		{
 			if (arg->type != types[i] || arg->length > len)
