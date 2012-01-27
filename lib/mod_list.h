@@ -72,13 +72,13 @@ int userfw_find_module_by_name(const struct userfw_modlist *, const char *, size
 int userfw_find_module_by_id(const struct userfw_modlist *, userfw_module_id_t, struct userfw_modinfo**);
 int userfw_find_action(const struct userfw_modlist *, const char *, size_t, struct userfw_action_descr**);
 int userfw_find_action_in_module(const struct userfw_modinfo*, const char *, size_t, struct userfw_action_descr**);
-int userfw_find_action_by_opcode(struct userfw_modinfo*, opcode_t, struct userfw_action_descr**);
+int userfw_find_action_by_opcode(const struct userfw_modinfo*, opcode_t, struct userfw_action_descr**);
 int userfw_find_match(const struct userfw_modlist *, const char *, size_t, struct userfw_match_descr**);
 int userfw_find_match_in_module(const struct userfw_modinfo*, const char *, size_t, struct userfw_match_descr**);
-int userfw_find_match_by_opcode(struct userfw_modinfo*, opcode_t, struct userfw_match_descr**);
+int userfw_find_match_by_opcode(const struct userfw_modinfo*, opcode_t, struct userfw_match_descr**);
 int userfw_find_cmd(const struct userfw_modlist *, const char *, size_t, struct userfw_cmd_descr**);
 int userfw_find_cmd_in_module(const struct userfw_modinfo*, const char *, size_t, struct userfw_cmd_descr**);
-int userfw_find_cmd_by_opcode(struct userfw_modinfo*, opcode_t, struct userfw_cmd_descr**);
+int userfw_find_cmd_by_opcode(const struct userfw_modinfo*, opcode_t, struct userfw_cmd_descr**);
 
 #ifdef __cplusplus
 }

@@ -335,7 +335,7 @@ userfw_find_ ## x ## _in_module(const struct userfw_modinfo *m, const char *name
 } \
  \
 int \
-userfw_find_ ## x ## _by_opcode(struct userfw_modinfo *m, opcode_t op, struct userfw_ ## x ## _descr **dst) \
+userfw_find_ ## x ## _by_opcode(const struct userfw_modinfo *m, opcode_t op, struct userfw_ ## x ## _descr **dst) \
 { \
 	int i, ret = 0; \
 	for(i = 0; i < m->n ## y; i++) \
@@ -346,7 +346,7 @@ userfw_find_ ## x ## _by_opcode(struct userfw_modinfo *m, opcode_t op, struct us
 			ret++; \
 		} \
 	} \
-	return 0; \
+	return ret; \
 }
 
 SEARCH_FUNCTIONS(action, actions);
