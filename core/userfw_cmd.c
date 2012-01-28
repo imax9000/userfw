@@ -37,21 +37,18 @@ int parse_arg_list(unsigned char *, int, userfw_arg *, int, uint8_t const *);
 
 int
 userfw_cmd_dispatch(unsigned char *buf,
-		userfw_module_id_t dst,
 		struct socket *so,
 		struct thread *td)
 {
 	int err = 0;
+	userfw_module_id_t dst = 0;
 	struct userfw_io_header *msg = (struct userfw_io_header *)buf;
 	const userfw_modinfo *modinfo = NULL;
 	const userfw_cmd_descr *cmdinfo = NULL;
-	struct userfw_io_header *cmd, *opcode, *cookie = NULL;
+	struct userfw_io_header *cmd, *opcode, *cookie = NULL, *mod_id;
 	userfw_arg *parsed_args = NULL;
 	int i;
 
-	modinfo = userfw_mod_find(dst);
-	if (modinfo == NULL)
-		return ECONNREFUSED;
 	if (msg->type != T_CONTAINER || (msg->subtype != ST_MESSAGE && msg->subtype != ST_CMDCALL))
 		return EOPNOTSUPP;
 	if (msg->length < sizeof(*msg) + sizeof(*cmd))
@@ -69,6 +66,16 @@ userfw_cmd_dispatch(unsigned char *buf,
 		return EINVAL;
 	if (cookie != NULL && (!BLOCK_FITS_INTO_OUTER(cookie, cmd) || cookie->length != sizeof(*cookie) + sizeof(uint32_t)))
 		return EINVAL;
+
+	mod_id = userfw_io_find_block((char*)cmd + sizeof(*cmd), cmd->length - sizeof(*cmd), T_UINT32, ST_MOD_ID);
+	if (mod_id == NULL || ! BLOCK_FITS_INTO_OUTER(mod_id, cmd) ||
+		mod_id->length != sizeof(*mod_id) + sizeof(uint32_t))
+		return EINVAL;
+
+	dst = *((uint32_t*)((char*)mod_id + sizeof(*mod_id)));
+	modinfo = userfw_mod_find(dst);
+	if (modinfo == NULL)
+		return ECONNREFUSED;
 
 	opcode = userfw_io_find_block((char*)cmd + sizeof(*cmd), cmd->length - sizeof(*cmd), T_UINT32, ST_OPCODE);
 	if (opcode == NULL || ! BLOCK_FITS_INTO_OUTER(opcode, cmd) ||

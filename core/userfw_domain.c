@@ -165,21 +165,6 @@ userfw_sosend(struct socket *so,
 }
 
 static int
-userfw_connect(struct socket *so,
-		struct sockaddr *nam,
-		struct thread *td)
-{
-	int r = EOPNOTSUPP;
-	
-	UFWDOMAIN_RLOCK;
-	if (ufwreqs != NULL && ufwreqs->pru_connect != NULL)
-		r = ufwreqs->pru_connect(so,nam,td);
-	UFWDOMAIN_RUNLOCK;
-
-	return r;
-}
-
-static int
 userfw_disconnect(struct socket *so)
 {
 	int r = EOPNOTSUPP;
@@ -322,12 +307,10 @@ userfw_sosend(struct socket *so,
 		struct thread *td)
 {
 	int err = 0;
-	userfw_module_id_t	dst_mod;
 	struct userfwpcb *pcb = sotopcb(so);
 	struct userfw_io_header msg;
 	int cmd_ready = 0;
 	unsigned char *data = NULL;
-	struct sockaddr_userfw *addr = (struct sockaddr_userfw *)addr_;
 	struct mdchain chain;
 
 	if (pcb == NULL)
@@ -340,11 +323,6 @@ userfw_sosend(struct socket *so,
 
 	if (err == 0)
 	{
-		if (addr == NULL)
-			dst_mod = pcb->module;
-		else
-			dst_mod = addr->module;
-		
 		sbappendstream_locked(&(so->so_snd), m);
 		m = NULL;
 
@@ -372,7 +350,7 @@ userfw_sosend(struct socket *so,
 		md_initm(&chain, so->so_snd.sb_mb);
 		md_get_mem(&chain, data, msg.length, MB_MSYSTEM);
 
-		err = userfw_cmd_dispatch(data, dst_mod, so, td);
+		err = userfw_cmd_dispatch(data, so, td);
 		sbdrop_locked(&(so->so_snd), msg.length);
 		free(data, M_USERFW);
 	}
@@ -385,26 +363,6 @@ userfw_sosend(struct socket *so,
 		m_freem(m);
 
 	return err;
-}
-
-static int
-userfw_connect(struct socket *so,
-		struct sockaddr *nam,
-		struct thread *td)
-{
-	struct userfwpcb *pcb = sotopcb(so);
-	struct sockaddr_userfw *addr = (struct sockaddr_userfw *)nam;
-
-	if (pcb == NULL || nam == NULL || nam->sa_family != AF_USERFW)
-		return EINVAL;
-
-	if (userfw_mod_find(addr->module) == NULL)
-	{
-		return ECONNREFUSED;
-	}
-	pcb->module = addr->module;
-
-	return 0;
 }
 
 static int
@@ -465,7 +423,6 @@ struct pr_usrreqs userfwreqs = {
 	.pru_attach = userfw_soattach,
 	.pru_detach = userfw_sodetach,
 	.pru_send = userfw_sosend,
-	.pru_connect = userfw_connect,
 	.pru_disconnect = userfw_disconnect
 };
 

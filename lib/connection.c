@@ -50,7 +50,6 @@ userfw_connect()
 	if (c != NULL)
 	{
 		c->fd = socket(AF_USERFW, SOCK_STREAM, 0);
-		c->last_mod = 0;
 		c->d = NULL;
 
 		if (c->fd < 0)
@@ -103,43 +102,24 @@ userfw_send(struct userfw_connection *c, unsigned char *buf, size_t len)
 }
 
 int
-userfw_send_to(struct userfw_connection *c, unsigned char *buf, size_t len, userfw_module_id_t dst)
-{
-	struct sockaddr_userfw addr;
-
-	if (c == NULL)
-		return -1;
-
-	addr.sa_len = sizeof(addr);
-	addr.sa_family = AF_USERFW;
-	addr.module = dst;
-	if (connect(c->fd, (struct sockaddr*)(&addr), sizeof(addr)) == 0)
-	{
-		c->last_mod = dst;
-		return userfw_send(c, buf, len);
-	}
-
-	return -1;
-}
-
-int
 userfw_send_modlist_cmd(struct userfw_connection *c)
 {
 	struct userfw_io_block *msg = NULL;
 	unsigned char *buf = NULL;
 	int ret = -1, len;
 
-	msg = userfw_msg_alloc_container(T_CONTAINER, ST_CMDCALL, 1);
+	msg = userfw_msg_alloc_container(T_CONTAINER, ST_CMDCALL, 2);
 	if (msg != NULL)
 	{
-		if ((errno = userfw_msg_insert_uint32(msg, ST_OPCODE, CMD_MODLIST, 0)) == 0)
+		if ((errno = userfw_msg_insert_uint32(msg, ST_MOD_ID, USERFW_BASE_MOD, 0)) == 0 &&
+				(errno = userfw_msg_insert_uint32(msg, ST_OPCODE, CMD_MODLIST, 1)) == 0)
 		{
 			len = userfw_msg_calc_size(msg);
 			buf = malloc(len);
 			if (buf != NULL)
 			{
 				userfw_msg_serialize(msg, buf, len);
-				ret = userfw_send_to(c, buf, len, USERFW_BASE_MOD) > 0 ? 0 : -1;
+				ret = userfw_send(c, buf, len) > 0 ? 0 : -1;
 				free(buf);
 			}
 		}
@@ -156,18 +136,19 @@ userfw_send_modinfo_cmd(struct userfw_connection *c, userfw_module_id_t mod)
 	unsigned char *buf = NULL;
 	int ret = -1, len;
 
-	msg = userfw_msg_alloc_container(T_CONTAINER, ST_CMDCALL, 2);
+	msg = userfw_msg_alloc_container(T_CONTAINER, ST_CMDCALL, 3);
 	if (msg != NULL)
 	{
-		if ((errno = userfw_msg_insert_uint32(msg, ST_OPCODE, CMD_MODINFO, 0)) == 0 &&
-				(errno = userfw_msg_insert_uint32(msg, ST_ARG, mod, 1)) == 0)
+		if ((errno = userfw_msg_insert_uint32(msg, ST_MOD_ID, USERFW_BASE_MOD, 0)) == 0 &&
+				(errno = userfw_msg_insert_uint32(msg, ST_OPCODE, CMD_MODINFO, 1)) == 0 &&
+				(errno = userfw_msg_insert_uint32(msg, ST_ARG, mod, 2)) == 0)
 		{
 			len = userfw_msg_calc_size(msg);
 			buf = malloc(len);
 			if (buf != NULL)
 			{
 				userfw_msg_serialize(msg, buf, len);
-				ret = userfw_send_to(c, buf, len, USERFW_BASE_MOD) > 0 ? 0 : -1;
+				ret = userfw_send(c, buf, len) > 0 ? 0 : -1;
 				free(buf);
 			}
 		}

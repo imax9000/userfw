@@ -377,7 +377,7 @@ parse_arg(int argc, char *argv[], int type, struct userfw_modlist *modlist, int 
 }
 
 struct userfw_io_block *
-parse_cmd(int argc, char *argv[], struct userfw_modlist *modlist, userfw_module_id_t *dst)
+parse_cmd(int argc, char *argv[], struct userfw_modlist *modlist)
 {
 	struct userfw_cmd_descr *cmd = NULL;
 	struct userfw_io_block *ret = NULL, *arg;
@@ -387,11 +387,11 @@ parse_cmd(int argc, char *argv[], struct userfw_modlist *modlist, userfw_module_
 
 	if (cmd != NULL)
 	{
-		ret = userfw_msg_alloc_container(T_CONTAINER, ST_CMDCALL, cmd->nargs + 1);
+		ret = userfw_msg_alloc_container(T_CONTAINER, ST_CMDCALL, cmd->nargs + 2);
 		if (ret != NULL)
 		{
-			*dst = cmd->module;
-			userfw_msg_insert_uint32(ret, ST_OPCODE, cmd->opcode, 0);
+			userfw_msg_insert_uint32(ret, ST_MOD_ID, cmd->module, 0);
+			userfw_msg_insert_uint32(ret, ST_OPCODE, cmd->opcode, 1);
 			argc--;
 			argv++;
 			for(i = 0; i < cmd->nargs; i++)
@@ -406,7 +406,7 @@ parse_cmd(int argc, char *argv[], struct userfw_modlist *modlist, userfw_module_
 				}
 				argc -= d;
 				argv += d;
-				userfw_msg_set_arg(ret, arg, i + 1);
+				userfw_msg_set_arg(ret, arg, i + 2);
 			}
 		}
 	}

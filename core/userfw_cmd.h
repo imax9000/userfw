@@ -34,7 +34,6 @@ struct socket;
 struct thread;
 
 int userfw_cmd_dispatch(unsigned char *,
-		userfw_module_id_t,
 		struct socket *,
 		struct thread *);
 

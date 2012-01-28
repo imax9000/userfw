@@ -34,6 +34,6 @@
 #include "../lib/mod_list.h"
 #endif
 
-struct userfw_io_block * parse_cmd(int, char **, struct userfw_modlist *, userfw_module_id_t *);
+struct userfw_io_block * parse_cmd(int, char **, struct userfw_modlist *);
 
 #endif /* PARSE_H */

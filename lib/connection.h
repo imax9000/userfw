@@ -41,14 +41,12 @@ struct userfw_connection
 {
 	struct userfw_connection_priv *d; /* private data */
 	int fd;
-	userfw_module_id_t	last_mod;
 };
 
 struct userfw_connection * userfw_connect();
 int userfw_disconnect(struct userfw_connection *);
 
 int userfw_send(struct userfw_connection *, unsigned char*, size_t);
-int userfw_send_to(struct userfw_connection *, unsigned char*, size_t, userfw_module_id_t);
 int userfw_send_modlist_cmd(struct userfw_connection *);
 int userfw_send_modinfo_cmd(struct userfw_connection *, userfw_module_id_t);
 struct userfw_io_block * userfw_recv_msg(struct userfw_connection *);

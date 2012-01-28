@@ -111,7 +111,6 @@ int main(int argc, char *argv[])
 	struct userfw_io_block *cmd = NULL;
 	unsigned char *buf = NULL;
 	size_t len;
-	userfw_module_id_t dst;
 
 	start_from = parse_opts(argc, argv);
 	if (start_from == 0) // no options was given
@@ -137,7 +136,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	cmd = parse_cmd(argc - start_from, argv + start_from, modlist, &dst);
+	cmd = parse_cmd(argc - start_from, argv + start_from, modlist);
 	if (cmd == NULL)
 	{
 		fprintf(stderr, "Failed to parse command\n");
@@ -162,7 +161,7 @@ int main(int argc, char *argv[])
 
 	userfw_msg_free(cmd);
 
-	if (userfw_send_to(c, buf, len, dst) < 0)
+	if (userfw_send(c, buf, len) < 0)
 	{
 		perror("userfw_send_to");
 		fprintf(stderr, "Failed to send command\n");
