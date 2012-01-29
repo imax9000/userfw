@@ -126,6 +126,7 @@ print_simple_block(const struct userfw_io_block *msg)
 {
 	char *buf = NULL;
 	struct in_addr addr;
+	struct in6_addr addr6;
 	switch(msg->type)
 	{
 	case T_STRING:
@@ -165,6 +166,43 @@ print_simple_block(const struct userfw_io_block *msg)
 			fprintf(stderr, "Failed to allocate memory for IPv4 address\n");
 		}
 		break;
+	case T_IPv6:
+		buf = malloc(INET6_ADDRSTRLEN + 1);
+		if (buf != NULL)
+		{
+			bcopy(msg->data.ipv6.addr, addr6.__u6_addr.__u6_addr32, sizeof(uint32_t)*4);
+			inet_ntop(AF_INET6, &addr, buf, INET6_ADDRSTRLEN + 1);
+			printf("%s", buf);
+			int len = 0, i;
+			uint32_t mask;
+			for(i = 0; i < 4; i++)
+			{
+				if (msg->data.ipv6.mask[i] == 0xffffffff)
+				{
+					len += 32;
+				}
+				else
+				{
+					if (msg->data.ipv6.mask[i] != 0)
+					{
+						mask = ntohl(msg->data.ipv6.mask[i]);
+						while((mask & 0x1) == 0)
+						{
+							len++;
+							mask >>= 1;
+						}
+					}
+					break;
+				}
+			}
+			printf("/%d", len);
+			free(buf);
+		}
+		else
+		{
+			fprintf(stderr, "Failed to allocate memory for IPv6 address\n");
+		}
+		break;
 	}
 }
 
@@ -183,6 +221,7 @@ print_msg_full_recursive(const struct userfw_io_block *msg, const struct userfw_
 	case T_UINT16:
 	case T_UINT32:
 	case T_IPv4:
+	case T_IPv6:
 		print_indent(indent);
 		printf("Value: ");
 		print_simple_block(msg);

@@ -93,6 +93,12 @@ typedef union __userfw_arg
 	} ipv4;
 	struct
 	{
+		uint8_t	type;
+		uint32_t	addr[4];
+		uint32_t	mask[4];
+	} ipv6;
+	struct
+	{
 		uint8_t type;
 		userfw_match *p;
 	} match;

@@ -46,6 +46,7 @@ typedef enum __userfw_type
 	,T_UINT16
 	,T_UINT32
 	,T_IPv4
+	,T_IPv6
 	,T_MATCH
 	,T_ACTION
 } userfw_type;

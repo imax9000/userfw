@@ -137,6 +137,9 @@ type_size(uint32_t type)
 	case T_IPv4:
 		ret = sizeof(uint32_t)*2;
 		break;
+	case T_IPv6:
+		ret = sizeof(uint32_t)*8;
+		break;
 	}
 	return ret;
 }
@@ -208,6 +211,10 @@ userfw_msg_serialize(struct userfw_io_block *p, unsigned char *buf, size_t len)
 			*((uint32_t*)data) = p->data.ipv4.addr;
 			*((uint32_t*)(data + sizeof(uint32_t))) = p->data.ipv4.mask;
 			break;
+		case T_IPv6:
+			bcopy(p->data.ipv6.addr, data, sizeof(uint32_t)*4);
+			bcopy(p->data.ipv6.mask, data + sizeof(uint32_t)*4, sizeof(uint32_t)*4);
+			break;
 		}
 	}
 	return block_len;
@@ -259,6 +266,17 @@ userfw_msg_insert_ipv4(struct userfw_io_block *msg, uint32_t subtype, uint32_t a
 		return ENOMEM;
 	msg->args[pos]->data.ipv4.addr = addr;
 	msg->args[pos]->data.ipv4.mask = mask;
+	return 0;
+}
+
+int
+userfw_msg_insert_ipv6(struct userfw_io_block *msg, uint32_t subtype, const uint32_t addr[4], const uint32_t mask[4], uint32_t pos)
+{
+	userfw_msg_set_arg(msg, userfw_msg_alloc_block(T_IPv6, subtype), pos);
+	if (msg->args[pos] == NULL)
+		return ENOMEM;
+	bcopy(addr, msg->args[pos]->data.ipv6.addr, sizeof(uint32_t)*4);
+	bcopy(mask, msg->args[pos]->data.ipv6.mask, sizeof(uint32_t)*4);
 	return 0;
 }
 
@@ -332,6 +350,9 @@ userfw_msg_insert_arg(struct userfw_io_block *msg, uint32_t subtype, const userf
 		break;
 	case T_IPv4:
 		ret = userfw_msg_insert_ipv4(msg, subtype, arg->ipv4.addr, arg->ipv4.mask, pos);
+		break;
+	case T_IPv6:
+		ret = userfw_msg_insert_ipv6(msg, subtype, arg->ipv6.addr, arg->ipv6.mask, pos);
 		break;
 	case T_MATCH:
 		ret = userfw_msg_insert_match(msg, subtype, arg->match.p, pos);
@@ -420,6 +441,16 @@ userfw_msg_parse(unsigned char *buf, size_t len)
 		{
 			ret->data.ipv4.addr = *((uint32_t*)data);
 			ret->data.ipv4.mask = *((uint32_t*)(data + sizeof(uint32_t)));
+		}
+		break;
+	case T_IPv6:
+		if (hdr->length != sizeof(*hdr) + sizeof(uint32_t)*8)
+			break;
+		ret = userfw_msg_alloc_block(hdr->type, hdr->subtype);
+		if (ret != NULL)
+		{
+			bcopy(data, ret->data.ipv6.addr, sizeof(uint32_t)*4);
+			bcopy(data + sizeof(uint32_t)*4, ret->data.ipv6.mask, sizeof(uint32_t)*4);
 		}
 		break;
 	case T_CONTAINER:

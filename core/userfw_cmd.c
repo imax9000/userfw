@@ -165,6 +165,10 @@ parse_arg(unsigned char *buf, userfw_arg *dst)
 		bcopy(data, &(dst->ipv4.addr), sizeof(uint32_t));
 		bcopy(data + sizeof(uint32_t), &(dst->ipv4.mask), sizeof(uint32_t));
 		break;
+	case T_IPv6:
+		bcopy(data, &(dst->ipv6.addr), 4*sizeof(uint32_t));
+		bcopy(data + 4*sizeof(uint32_t), &(dst->ipv6.addr), 4*sizeof(uint32_t));
+		break;
 	case T_MATCH:
 	case T_ACTION:
 		{

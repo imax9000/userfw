@@ -298,6 +298,81 @@ parse_ipv4(int argc, char *argv[], struct userfw_modlist *modlist, int *consumed
 	return ret;
 }
 
+static struct userfw_io_block *
+parse_ipv6(int argc, char *argv[], struct userfw_modlist *modlist, int *consumed)
+{
+	struct userfw_io_block *ret = NULL;
+	struct in6_addr addr;
+	char *c;
+
+	if (argc < 1)
+		return NULL;
+
+	ret = userfw_msg_alloc_block(T_IPv6, ST_ARG);
+
+	if (ret != NULL)
+	{
+		ret->data.type = T_IPv6;
+		c = strchr(argv[0], '/');
+
+		if (c == NULL) // only address
+		{
+			memset(ret->data.ipv6.mask, 0xff, sizeof(uint32_t)*4);
+		}
+		else if (*c == '/') // CIDR notation
+		{
+			int n, i;
+			n = strtonum(c + 1, 0, 128, NULL);
+			if (errno == 0)
+			{
+				bzero(ret->data.ipv6.mask, sizeof(uint32_t)*4);
+				for(i = 0; i < 4; i++)
+				{
+					if (n >= 32)
+					{
+						ret->data.ipv6.mask[i] = 0xffffffff;
+						n -= 32;
+					}
+					else
+					{
+						ret->data.ipv6.mask[i] = htonl(0xffffffff << (32 - n));
+						break;
+					}
+				}
+			}
+			else
+			{
+				perror("strtonum");
+				fprintf(stderr, "Failed to parse prefix length in %s\n", argv[0]);
+			}
+		}
+
+		if (c != NULL)
+			*c = '\0';
+
+		switch(inet_pton(AF_INET6, argv[0], &addr))
+		{
+		case 1:
+			bcopy(addr.__u6_addr.__u6_addr32, ret->data.ipv6.addr, sizeof(uint32_t)*4);
+			break;
+		case -1:
+			perror("inet_pton");
+		case 0:
+			fprintf(stderr, "Failed to parse address %s\n", argv[0]);
+			userfw_msg_free(ret);
+			ret = NULL;
+			break;
+		}
+		*consumed = 1;
+	}
+	else
+	{
+		fprintf(stderr, "Failed to allocate memory for T_IPv6\n");
+	}
+
+	return ret;
+}
+
 struct userfw_io_block * parse_arg(int argc, char *argv[], int type, struct userfw_modlist *modlist, int *consumed);
 
 #define PARSE_FUNCTION(x, y) struct userfw_io_block * \
@@ -368,6 +443,8 @@ parse_arg(int argc, char *argv[], int type, struct userfw_modlist *modlist, int 
 		return parse_uint32(argc, argv, modlist, consumed);
 	case T_IPv4:
 		return parse_ipv4(argc, argv, modlist, consumed);
+	case T_IPv6:
+		return parse_ipv6(argc, argv, modlist, consumed);
 	case T_MATCH:
 		return parse_match(argc, argv, modlist, consumed);
 	case T_ACTION:
