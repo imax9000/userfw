@@ -106,6 +106,10 @@ typedef union __userfw_arg
 
 typedef int (*userfw_match_fn)(struct mbuf **, userfw_chk_args *, userfw_match *, userfw_cache *);
 typedef int (*userfw_action_fn)(struct mbuf **, userfw_chk_args *, userfw_action *, userfw_cache *, int *);
+typedef int (*userfw_match_ctor)(userfw_match *);
+typedef int (*userfw_match_dtor)(userfw_match *);
+typedef int (*userfw_action_ctor)(userfw_action *);
+typedef int (*userfw_action_dtor)(userfw_action *);
 typedef int (*userfw_cmd_handler)(opcode_t, uint32_t, userfw_arg *, struct socket *, struct thread *);
 
 typedef struct __userfw_match_descr
@@ -115,6 +119,8 @@ typedef struct __userfw_match_descr
 	uint8_t	arg_types[USERFW_ARGS_MAX];
 	char	name[USERFW_NAME_LEN];
 	userfw_match_fn	do_match;
+	userfw_match_ctor	ctor;
+	userfw_match_dtor	dtor;
 } userfw_match_descr;
 
 typedef struct __userfw_action_descr
@@ -124,6 +130,8 @@ typedef struct __userfw_action_descr
 	uint8_t	arg_types[USERFW_ARGS_MAX];
 	char	name[USERFW_NAME_LEN];
 	userfw_action_fn	do_action;
+	userfw_action_ctor	ctor;
+	userfw_action_dtor	dtor;
 } userfw_action_descr;
 
 typedef struct __userfw_cmd_descr
@@ -142,6 +150,8 @@ struct __userfw_match
 	uint8_t	nargs;
 	userfw_match_fn	do_match;
 	userfw_arg	args[USERFW_ARGS_MAX];
+	userfw_match_dtor	dtor;
+	void *priv;
 };
 
 struct __userfw_action
@@ -151,6 +161,8 @@ struct __userfw_action
 	uint8_t	nargs;
 	userfw_action_fn	do_action;
 	userfw_arg	args[USERFW_ARGS_MAX];
+	userfw_action_dtor	dtor;
+	void *priv;
 };
 
 typedef struct __userfw_modinfo

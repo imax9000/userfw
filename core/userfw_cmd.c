@@ -208,9 +208,12 @@ parse_arg(unsigned char *buf, userfw_arg *dst)
 				match->op = opcode;
 				match->nargs = matchdescr->nargs;
 				match->do_match = matchdescr->do_match;
+				match->dtor = matchdescr->dtor;
 
 				err = parse_arg_list(data, arg->length - sizeof(*arg),
 						match->args, match->nargs, matchdescr->arg_types);
+				if (err == 0 && matchdescr->ctor != NULL)
+					err = matchdescr->ctor(match);
 				dst->match.p = match;
 			}
 			else
@@ -233,9 +236,12 @@ parse_arg(unsigned char *buf, userfw_arg *dst)
 				action->op = opcode;
 				action->nargs = actiondescr->nargs;
 				action->do_action = actiondescr->do_action;
+				action->dtor = actiondescr->dtor;
 
 				err = parse_arg_list(data, arg->length - sizeof(*arg),
 						action->args, action->nargs, actiondescr->arg_types);
+				if (err == 0 && actiondescr->ctor != NULL)
+					err = actiondescr->ctor(action);
 				dst->action.p = action;
 			}
 			else

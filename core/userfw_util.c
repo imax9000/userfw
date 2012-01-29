@@ -57,11 +57,15 @@ free_arg(userfw_arg *arg, struct malloc_type *mtype)
 		free(arg->string.data, mtype);
 		break;
 	case T_MATCH:
+		if (arg->match.p->dtor != NULL)
+			arg->match.p->dtor(arg->match.p);
 		free_match_args(arg->match.p, mtype);
 		userfw_mod_dec_refcount(arg->action.p->mod);
 		free(arg->match.p, mtype);
 		break;
 	case T_ACTION:
+		if (arg->action.p->dtor != NULL)
+			arg->action.p->dtor(arg->action.p);
 		free_action_args(arg->action.p, mtype);
 		userfw_mod_dec_refcount(arg->match.p->mod);
 		free(arg->match.p, mtype);
