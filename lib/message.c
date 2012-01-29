@@ -58,6 +58,7 @@ userfw_msg_alloc_block(uint32_t type, uint32_t subtype)
 		ret->subtype = subtype;
 		ret->nargs = 0;
 		ret->args = NULL;
+		ret->data.type = type;
 	}
 
 	return ret;
@@ -385,7 +386,6 @@ userfw_msg_parse(unsigned char *buf, size_t len)
 		ret = userfw_msg_alloc_block(hdr->type, hdr->subtype);
 		if (ret != NULL)
 		{
-			ret->data.type = T_STRING;
 			ret->data.string.length = hdr->length - sizeof(*hdr);
 			if ((ret->data.string.data = malloc(ret->data.string.length)) != NULL)
 			{
@@ -403,20 +403,14 @@ userfw_msg_parse(unsigned char *buf, size_t len)
 			break;
 		ret = userfw_msg_alloc_block(hdr->type, hdr->subtype);
 		if (ret != NULL)
-		{
-			ret->data.type = T_UINT16;
 			ret->data.uint16.value = *((uint16_t*)data);
-		}
 		break;
 	case T_UINT32:
 		if (hdr->length != sizeof(*hdr) + sizeof(uint32_t))
 			break;
 		ret = userfw_msg_alloc_block(hdr->type, hdr->subtype);
 		if (ret != NULL)
-		{
-			ret->data.type = T_UINT32;
 			ret->data.uint32.value = *((uint32_t*)data);
-		}
 		break;
 	case T_IPv4:
 		if (hdr->length != sizeof(*hdr) + sizeof(uint32_t)*2)
@@ -424,7 +418,6 @@ userfw_msg_parse(unsigned char *buf, size_t len)
 		ret = userfw_msg_alloc_block(hdr->type, hdr->subtype);
 		if (ret != NULL)
 		{
-			ret->data.type = T_IPv4;
 			ret->data.ipv4.addr = *((uint32_t*)data);
 			ret->data.ipv4.mask = *((uint32_t*)(data + sizeof(uint32_t)));
 		}

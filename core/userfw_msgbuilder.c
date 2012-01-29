@@ -56,6 +56,7 @@ userfw_msg_alloc_block(uint32_t type, uint32_t subtype, struct malloc_type *mtyp
 	ret->subtype = subtype;
 	ret->nargs = 0;
 	ret->args = NULL;
+	ret->data.type = type;
 
 	return ret;
 }
