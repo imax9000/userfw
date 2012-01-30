@@ -26,7 +26,6 @@
 
 
 #include "userfw.h"
-#include "userfw_dev.h"
 #include "userfw_pfil.h"
 #include "userfw_module.h"
 #include "userfw_domain.h"
@@ -70,10 +69,6 @@ int userfw_init()
 	SLIST_INIT(&userfw_modules_list);
 	rw_init(&userfw_modules_list_mtx, "userfw modules list lock");
 
-#if 0
-	err = userfw_dev_register();
-#endif
-
 	userfw_ruleset_init(&global_rules, "userfw global ruleset lock");
 
 	if (!err)
@@ -100,11 +95,6 @@ int userfw_uninit()
 
 		userfw_ruleset_uninit(&global_rules, M_USERFW);
 	}
-
-#if 0
-	if (!err)
-		err = userfw_dev_unregister();
-#endif
 
 	return err;
 }
