@@ -109,6 +109,19 @@ userfw_ruleset_insert_rule(userfw_ruleset *ruleset, userfw_rule *rule)
 	return err;
 }
 
+static void
+free_rule(userfw_rule *rule, struct malloc_type *mtype)
+{
+	if (rule != NULL)
+	{
+		free_action_args(&(rule->action), mtype);
+		free_match_args(&(rule->match), mtype);
+		userfw_mod_dec_refcount(rule->action.mod);
+		userfw_mod_dec_refcount(rule->match.mod);
+		free(rule, mtype);
+	}
+}
+
 int
 userfw_ruleset_delete_rule(userfw_ruleset *ruleset, int num, struct malloc_type *mtype)
 {
@@ -124,7 +137,7 @@ userfw_ruleset_delete_rule(userfw_ruleset *ruleset, int num, struct malloc_type 
 		{
 			p = ruleset->rule;
 			ruleset->rule = p->next;
-			free(p, mtype);
+			free_rule(p, mtype);
 		}
 		else
 		{
@@ -137,7 +150,7 @@ userfw_ruleset_delete_rule(userfw_ruleset *ruleset, int num, struct malloc_type 
 			{
 				p2 = p->next;
 				p->next = p2->next;
-				free(p2, mtype);
+				free_rule(p2, mtype);
 			}
 		}
 	}
