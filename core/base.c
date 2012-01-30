@@ -56,9 +56,19 @@ action_deny(struct mbuf **mb, userfw_chk_args *args, userfw_action *a, userfw_ca
 	return EACCES;
 }
 
+static int
+action_continue(struct mbuf **mb, userfw_chk_args *args, userfw_action *a, userfw_cache *cache, int *continue_)
+{
+	int ret = a->do_action(mb, args, a->args[0].action.p, cache, continue_);
+	*continue_ = (a->op == A_CONTINUE) ? 1 : 0;
+	return ret;
+}
+
 static userfw_action_descr base_actions[] = {
 	{A_ALLOW,	0,	{},	"allow",	action_allow}
 	,{A_DENY,	0,	{},	"deny",	action_deny}
+	,{A_CONTINUE,	0,	{T_ACTION},	"continue-after", action_continue}
+	,{A_STOP,	0,	{T_ACTION},	"stop-after", action_continue}
 };
 
 static int

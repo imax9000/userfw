@@ -36,6 +36,8 @@ enum __base_actions
 {
 	A_ALLOW
 	,A_DENY
+	,A_CONTINUE
+	,A_STOP
 };
 
 enum __base_matches
