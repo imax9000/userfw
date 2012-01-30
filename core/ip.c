@@ -33,6 +33,7 @@
 #include <userfw/module.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <netinet/ip6.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/sctp.h>
@@ -154,11 +155,76 @@ match_ip_ver(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userf
 		return 0;
 }
 
+static int
+match_ip_proto(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache)
+{
+	struct mbuf *m = *mb;
+	struct ip *ip = mtod(m, struct ip *);
+	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
+	unsigned char val = 0;
+
+	VERIFY_OPCODE2(match, USERFW_IP_MOD, M_IP_PROTO, M_IP_PROTO_NAME, 0);
+	
+	switch(ip->ip_v)
+	{
+	case 4:
+		val = ip->ip_p;
+		break;
+	case 6:
+		val = ip6->ip6_nxt;
+		break;
+	default:
+		return 0; /* unknown IP version */
+	}
+
+	if ((match->op == M_IP_PROTO && val == match->args[0].uint16.value) ||
+		(match->op == M_IP_PROTO_NAME && val == (int)(match->priv)))
+		return 1;
+	else
+		return 0;
+}
+
+static const int proto_count = 5;
+static const char *proto_names[] = {
+	"tcp"
+	,"udp"
+	,"sctp"
+	,"ip"
+	,"icmp"
+};
+
+static const unsigned char proto_numbers[] = {
+	IPPROTO_TCP
+	,IPPROTO_UDP
+	,IPPROTO_SCTP
+	,IPPROTO_IPV4
+	,IPPROTO_ICMP
+};
+
+static int
+match_ip_proto_ctor(userfw_match *match)
+{
+	int i;
+
+	for(i = 0; i < proto_count; i++)
+	{
+		if (memcmp(proto_names[i], match->args[0].string.data, match->args[0].string.length) == 0)
+		{
+			match->priv = (void*)(int)(proto_numbers[i]);
+			return 0;
+		}
+	}
+
+	return ENOENT;
+}
+
 static userfw_match_descr ip_matches[] = {
 	{M_SRCPORT,	1,	{T_UINT16},	"src-port",	match_port}
 	,{M_DSTPORT,	1,	{T_UINT16},	"dst-port",	match_port}
 	,{M_IPV4,	0,	{},	"ipv4",	match_ip_ver}
 	,{M_IPV6,	0,	{},	"ipv6",	match_ip_ver}
+	,{M_IP_PROTO,	1,	{T_UINT16},	"proto-num",	match_ip_proto}
+	,{M_IP_PROTO_NAME,	1, {T_STRING},	"proto",	match_ip_proto, match_ip_proto_ctor}
 };
 
 static userfw_modinfo ip_modinfo =
