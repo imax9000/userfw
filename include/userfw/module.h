@@ -195,21 +195,21 @@ int userfw_mod_dec_refcount(userfw_module_id_t);
 #define VERIFY_OPCODE(obj, module, opcode, retval) do { \
 		if ((obj)->mod != (module) || (obj)->op != (opcode)) \
 		{ \
-			printf("userfw: %s: called with wrong opcode %d:%d", __func__, (obj)->mod, (obj)->op); \
+			printf("userfw: %s: called with wrong opcode %d:%d\n", __func__, (obj)->mod, (obj)->op); \
 			return (retval); \
 		} } while(0)
 
 #define VERIFY_OPCODE2(obj, module, opcode1, opcode2, retval) do { \
 		if ((obj)->mod != (module) || ((obj)->op != (opcode1) && (obj)->op != (opcode2))) \
 		{ \
-			printf("userfw: %s: called with wrong opcode %d:%d", __func__, (obj)->mod, (obj)->op); \
+			printf("userfw: %s: called with wrong opcode %d:%d\n", __func__, (obj)->mod, (obj)->op); \
 			return (retval); \
 		} } while(0)
 
 #define VERIFY_OPCODE3(obj, module, opcode1, opcode2, opcode3, retval) do { \
 		if ((obj)->mod != (module) || ((obj)->op != (opcode1) && (obj)->op != (opcode2) && (obj)->op != (opcode3))) \
 		{ \
-			printf("userfw: %s: called with wrong opcode %d:%d", __func__, (obj)->mod, (obj)->op); \
+			printf("userfw: %s: called with wrong opcode %d:%d\n", __func__, (obj)->mod, (obj)->op); \
 			return (retval); \
 		} } while(0)
 
