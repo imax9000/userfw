@@ -45,6 +45,7 @@ const char *type_names[] = {
 "T_UINT16",
 "T_UINT32",
 "T_IPv4",
+"T_IPv6",
 "T_MATCH",
 "T_ACTION"
 };
@@ -63,6 +64,7 @@ type_name(uint32_t type)
 	case T_UINT16:
 	case T_UINT32:
 	case T_IPv4:
+	case T_IPv6:
 	case T_MATCH:
 	case T_ACTION:
 		return type_names[type];
