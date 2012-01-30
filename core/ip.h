@@ -34,6 +34,8 @@ enum __ip_matches
 {
 	M_SRCPORT
 	,M_DSTPORT
+	,M_IPV4
+	,M_IPV6
 };
 
 #endif /* USERFW_MOD_IP_H */

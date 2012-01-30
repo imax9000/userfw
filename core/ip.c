@@ -130,9 +130,35 @@ match_port(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_
 		return 0;
 };
 
+static int
+match_ip_ver(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache)
+{
+	struct mbuf *m = *mb;
+	int needed_ver = 0;
+	
+	VERIFY_OPCODE2(match, USERFW_IP_MOD, M_IPV4, M_IPV6, 0);
+
+	switch(match->op)
+	{
+	case M_IPV4:
+		needed_ver = 4;
+		break;
+	case M_IPV6:
+		needed_ver = 6;
+		break;
+	}
+
+	if (((mtod(m, char *)[0] & 0xf0) >> 4) == needed_ver)
+		return 1;
+	else
+		return 0;
+}
+
 static userfw_match_descr ip_matches[] = {
 	{M_SRCPORT,	1,	{T_UINT16},	"src-port",	match_port}
 	,{M_DSTPORT,	1,	{T_UINT16},	"dst-port",	match_port}
+	,{M_IPV4,	0,	{},	"ipv4",	match_ip_ver}
+	,{M_IPV6,	0,	{},	"ipv6",	match_ip_ver}
 };
 
 static userfw_modinfo ip_modinfo =
