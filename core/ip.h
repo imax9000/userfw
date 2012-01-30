@@ -25,37 +25,15 @@
  */
 
 
-#ifndef USERFW_MOD_BASE_H
-#define USERFW_MOD_BASE_H
+#ifndef USERFW_MOD_IP_H
+#define USERFW_MOD_IP_H
 
-#include <userfw/types.h>
+#define	USERFW_IP_MOD	1
 
-#define	USERFW_BASE_MOD	0
-
-enum __base_actions
+enum __ip_matches
 {
-	A_ALLOW
-	,A_DENY
-	,A_CONTINUE
-	,A_STOP
+	M_SRCPORT
+	,M_DSTPORT
 };
 
-enum __base_matches
-{
-	M_IN = USERFW_IN
-	,M_OUT = USERFW_OUT
-	,M_OR
-	,M_AND
-	,M_NOT
-};
-
-enum __base_cmds
-{
-	CMD_MODLIST
-	,CMD_MODINFO
-	,CMD_LIST_RULESET
-	,CMD_DELETE_RULE
-	,CMD_INSERT_RULE
-};
-
-#endif /* USERFW_MOD_BASE_H */
+#endif /* USERFW_MOD_IP_H */

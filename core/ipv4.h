@@ -25,37 +25,15 @@
  */
 
 
-#ifndef USERFW_MOD_BASE_H
-#define USERFW_MOD_BASE_H
+#ifndef USERFW_MOD_IPV4_H
+#define USERFW_MOD_IPV4_H
 
-#include <userfw/types.h>
+#define	USERFW_IPV4_MOD	2
 
-#define	USERFW_BASE_MOD	0
-
-enum __base_actions
+enum __ipv4_matches
 {
-	A_ALLOW
-	,A_DENY
-	,A_CONTINUE
-	,A_STOP
+	M_SRCIPV4
+	,M_DSTIPV4
 };
 
-enum __base_matches
-{
-	M_IN = USERFW_IN
-	,M_OUT = USERFW_OUT
-	,M_OR
-	,M_AND
-	,M_NOT
-};
-
-enum __base_cmds
-{
-	CMD_MODLIST
-	,CMD_MODINFO
-	,CMD_LIST_RULESET
-	,CMD_DELETE_RULE
-	,CMD_INSERT_RULE
-};
-
-#endif /* USERFW_MOD_BASE_H */
+#endif /* USERFW_MOD_IPV4_H */

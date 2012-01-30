@@ -31,11 +31,6 @@
 #include <sys/kernel.h>
 #include "base.h"
 #include <userfw/module.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/tcp.h>
-#include <netinet/udp.h>
-#include <netinet/sctp.h>
 #include <sys/mbuf.h>
 #include "userfw_module.h"
 #include <userfw/io.h>
@@ -83,123 +78,6 @@ match_direction(struct mbuf **mb, userfw_chk_args *args, userfw_match *m, userfw
 }
 
 static int
-match_ipv4(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache)
-{
-	struct mbuf	*m = *mb;
-	uint32_t	val = 0;
-	struct ip	*ip = mtod(m, struct ip *);
-
-	VERIFY_OPCODE2(match, USERFW_BASE_MOD, M_SRCIPV4, M_DSTIPV4, 0);
-
-	if (ip->ip_v != 4)
-		return 0;
-
-	switch (match->op)
-	{
-	case M_SRCIPV4:
-		val = ip->ip_src.s_addr;
-		break;
-	case M_DSTIPV4:
-		val = ip->ip_dst.s_addr;
-		break;
-	}
-
-	if ((val & match->args[0].ipv4.mask) ==
-		(match->args[0].ipv4.addr & match->args[0].ipv4.mask))
-		return 1;
-
-	return 0;
-}
-
-static int
-match_port(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache)
-{
-	struct mbuf	*m = *mb;
-	uint16_t	val = 0;
-	struct ip	*ip = mtod(m, struct ip *);
-	struct tcphdr	*tcp;
-	struct udphdr	*udp;
-	struct sctphdr	*sctp;
-	int	ip_header_len = (ip->ip_hl) << 2;
-
-	VERIFY_OPCODE2(match, USERFW_BASE_MOD, M_SRCPORT, M_DSTPORT, 0);
-
-	switch (ip->ip_p)
-	{
-	case IPPROTO_TCP:
-		(*mb) = m = m_pullup(m, ip_header_len + sizeof(struct tcphdr));
-		if (m != NULL)
-		{
-			tcp = (struct tcphdr *)(mtod(m, uint8_t *) + ip_header_len);
-			switch (match->op)
-			{
-			case M_SRCPORT:
-				val = tcp->th_sport;
-				break;
-			case M_DSTPORT:
-				val = tcp->th_dport;
-				break;
-			}
-		}
-		else
-		{
-			printf("userfw_base: TCP header pullup failed\n");
-			return 0;
-		}
-		break;
-	case IPPROTO_UDP:
-		(*mb) = m = m_pullup(m, ip_header_len + sizeof(struct udphdr));
-		if (m != NULL)
-		{
-			udp = (struct udphdr *)(mtod(m, uint8_t *) + ip_header_len);
-			switch (match->op)
-			{
-			case M_SRCPORT:
-				val = udp->uh_sport;
-				break;
-			case M_DSTPORT:
-				val = udp->uh_dport;
-				break;
-			}
-		}
-		else
-		{
-			printf("userfw_base: UDP header pullup failed\n");
-			return 0;
-		}
-		break;
-	case IPPROTO_SCTP:
-		(*mb) = m = m_pullup(m, ip_header_len + sizeof(struct sctphdr));
-		if (m != NULL)
-		{
-			sctp = (struct sctphdr *)(mtod(m, uint8_t *) + ip_header_len);
-			switch (match->op)
-			{
-			case M_SRCPORT:
-				val = sctp->src_port;
-				break;
-			case M_DSTPORT:
-				val = sctp->dest_port;
-				break;
-			}
-		}
-		else
-		{
-			printf("userfw_base: SCTP header pullup failed\n");
-			return 0;
-		}
-		break;
-	default:
-		return 0;
-	}
-
-	if (val == match->args[0].uint16.value)
-		return 1;
-	else
-		return 0;
-};
-
-static int
 match_logic(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache)
 {
 	userfw_match	*match1, *match2;
@@ -241,10 +119,6 @@ match_invert(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userf
 static userfw_match_descr base_matches[] = {
 	{M_IN,	0,	{},	"in",	match_direction}
 	,{M_OUT,	0,	{},	"out",	match_direction}
-	,{M_SRCIPV4,	1,	{T_IPv4},	"src-ip",	match_ipv4}
-	,{M_DSTIPV4,	1,	{T_IPv4},	"dst-ip",	match_ipv4}
-	,{M_SRCPORT,	1,	{T_UINT16},	"src-port",	match_port}
-	,{M_DSTPORT,	1,	{T_UINT16},	"dst-port",	match_port}
 	,{M_OR,	2,	{T_MATCH, T_MATCH},	"or",	match_logic}
 	,{M_AND,	2,	{T_MATCH, T_MATCH}, "and",	match_logic}
 	,{M_NOT,	1,	{T_MATCH},	"not",	match_invert}

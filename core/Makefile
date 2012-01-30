@@ -8,7 +8,9 @@ SRCS=	userfw_mod.c \
 	userfw_util.c \
 	userfw_ruleset.c \
 	userfw_msgbuilder.c \
-	base.c
+	base.c \
+	ip.c \
+	ipv4.c
 KMOD=	userfw
 CFLAGS+=	-I../include
 KMODDIR?=	/boot/modules
