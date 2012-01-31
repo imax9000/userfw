@@ -78,5 +78,7 @@ struct userfw_io_block * userfw_ruleset_serialize_rule(userfw_rule *, struct mal
 
 int check_packet(struct mbuf **mb, userfw_chk_args *args, userfw_ruleset *ruleset);
 
+void free_rule(userfw_rule *, struct malloc_type *);
+
 #endif /* _KERNEL */
 #endif /* USERFW_RULESET_H */

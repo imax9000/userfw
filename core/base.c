@@ -348,9 +348,7 @@ cmd_insert_rule(opcode_t op, uint32_t cookie, userfw_arg *args, struct socket *s
 	}
 	else
 	{
-		free_action_args(&(rule->action), M_USERFW);
-		free_match_args(&(rule->match), M_USERFW);
-		free(rule, M_USERFW);
+		free_rule(rule, M_USERFW);
 	}
 	return ret;
 }

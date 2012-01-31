@@ -45,12 +45,9 @@ free_rule_chain(userfw_rule *p, struct malloc_type *mtype)
 	while(p != NULL)
 	{
 		next = p->next;
-		free_match_args(&(p->match), mtype);
-		free_action_args(&(p->action), mtype);
-		free(p, mtype);
+		free_rule(p, mtype);
 		p = next;
 	}
-
 }
 
 void
@@ -107,19 +104,6 @@ userfw_ruleset_insert_rule(userfw_ruleset *ruleset, userfw_rule *rule)
 	USERFW_WUNLOCK(ruleset);
 
 	return err;
-}
-
-static void
-free_rule(userfw_rule *rule, struct malloc_type *mtype)
-{
-	if (rule != NULL)
-	{
-		free_action_args(&(rule->action), mtype);
-		free_match_args(&(rule->match), mtype);
-		userfw_mod_dec_refcount(rule->action.mod);
-		userfw_mod_dec_refcount(rule->match.mod);
-		free(rule, mtype);
-	}
 }
 
 int

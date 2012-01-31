@@ -29,6 +29,7 @@
 
 #include "userfw_util.h"
 #include "userfw.h"
+#include <userfw/ruleset.h>
 
 void
 free_match_args(userfw_match *match, struct malloc_type *mtype)
@@ -70,5 +71,18 @@ free_arg(userfw_arg *arg, struct malloc_type *mtype)
 		userfw_mod_dec_refcount(arg->match.p->mod);
 		free(arg->match.p, mtype);
 		break;
+	}
+}
+
+void
+free_rule(userfw_rule *rule, struct malloc_type *mtype)
+{
+	if (rule != NULL)
+	{
+		free_action_args(&(rule->action), mtype);
+		free_match_args(&(rule->match), mtype);
+		userfw_mod_dec_refcount(rule->action.mod);
+		userfw_mod_dec_refcount(rule->match.mod);
+		free(rule, mtype);
 	}
 }
