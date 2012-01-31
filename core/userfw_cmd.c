@@ -34,6 +34,7 @@
 
 int parse_arg(unsigned char *, userfw_arg *);
 int parse_arg_list(unsigned char *, int, userfw_arg *, int, uint8_t const *);
+static void reply_error(struct socket *so, int cookie, int errno);
 
 int
 userfw_cmd_dispatch(unsigned char *buf,
@@ -105,7 +106,12 @@ userfw_cmd_dispatch(unsigned char *buf,
 
 	free(parsed_args, M_USERFW);
 
-	return err;
+	if (err != 0)
+	{
+		reply_error(so, cookie != NULL ? (*((uint32_t*)((char*)cookie + sizeof(*cookie)))) : 0, err);
+	}
+
+	return 0;
 }
 
 int
@@ -265,4 +271,23 @@ parse_arg(unsigned char *buf, userfw_arg *dst)
 	}
 
 	return 0;
+}
+
+static void
+reply_error(struct socket *so, int cookie, int errno)
+{
+	struct userfw_io_block *msg;
+	size_t len;
+	unsigned char *buf;
+
+	msg = userfw_msg_alloc_container(T_CONTAINER, ST_MESSAGE, 2, M_USERFW);
+	userfw_msg_insert_uint32(msg, ST_COOKIE, cookie, 0, M_USERFW);
+	userfw_msg_insert_uint32(msg, ST_ERRNO, errno, 1, M_USERFW);
+
+	len = userfw_msg_calc_size(msg);
+	buf = malloc(len, M_USERFW, M_WAITOK);
+	if (userfw_msg_serialize(msg, buf, len) > 0)
+		userfw_domain_send_to_socket(so, buf, len);
+	free(buf, M_USERFW);
+	userfw_msg_free(msg, M_USERFW);
 }

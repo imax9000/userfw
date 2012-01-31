@@ -260,9 +260,7 @@ cmd_modinfo(opcode_t op, uint32_t cookie, userfw_arg *args, struct socket *so, s
 
 	if (modinfo == NULL)
 	{
-		msg = userfw_msg_alloc_container(T_CONTAINER, ST_MESSAGE, 2, M_USERFW);
-		userfw_msg_insert_uint32(msg, ST_ERRNO, ENOENT, 0, M_USERFW);
-		userfw_msg_insert_uint32(msg, ST_COOKIE, cookie, 1, M_USERFW);
+		return ENOENT;
 	}
 	else
 	{
@@ -308,23 +306,10 @@ cmd_list_ruleset(opcode_t op, uint32_t cookie, userfw_arg *args, struct socket *
 static int
 cmd_delete_rule(opcode_t op, uint32_t cookie, userfw_arg *args, struct socket *so, struct thread *th)
 {
-	int num, len, ret;
-	struct userfw_io_block *msg;
-	unsigned char *buf;
+	int num;
 
 	num = args[0].uint32.value;
-	ret = userfw_ruleset_delete_rule(&global_rules, num, M_USERFW);
-	msg = userfw_msg_alloc_container(T_CONTAINER, ST_MESSAGE, 2, M_USERFW);
-	userfw_msg_insert_uint32(msg, ST_COOKIE, cookie, 0, M_USERFW);
-	userfw_msg_insert_uint32(msg, ST_ERRNO, ret, 1, M_USERFW);
-	
-	len = userfw_msg_calc_size(msg);
-	buf = malloc(len, M_USERFW, M_WAITOK);
-	if (userfw_msg_serialize(msg, buf, len) > 0)
-		userfw_domain_send_to_socket(so, buf, len);
-	free(buf, M_USERFW);
-	userfw_msg_free(msg, M_USERFW);
-	return 0;
+	return userfw_ruleset_delete_rule(&global_rules, num, M_USERFW);
 }
 
 static int
@@ -348,23 +333,26 @@ cmd_insert_rule(opcode_t op, uint32_t cookie, userfw_arg *args, struct socket *s
 	args[2].type = T_INVAL;
 
 	ret = userfw_ruleset_insert_rule(&global_rules, rule);
-	msg = userfw_msg_alloc_container(T_CONTAINER, ST_MESSAGE, 2, M_USERFW);
-	userfw_msg_insert_uint32(msg, ST_COOKIE, cookie, 0, M_USERFW);
-	userfw_msg_insert_uint32(msg, ST_ERRNO, ret, 1, M_USERFW);
+	if (ret == 0)
+	{
+		msg = userfw_msg_alloc_container(T_CONTAINER, ST_MESSAGE, 2, M_USERFW);
+		userfw_msg_insert_uint32(msg, ST_COOKIE, cookie, 0, M_USERFW);
+		userfw_msg_insert_uint32(msg, ST_ERRNO, ret, 1, M_USERFW);
 
-	len = userfw_msg_calc_size(msg);
-	buf = malloc(len, M_USERFW, M_WAITOK);
-	if (userfw_msg_serialize(msg, buf, len) > 0)
-		userfw_domain_send_to_socket(so, buf, len);
-	if (ret != 0)
+		len = userfw_msg_calc_size(msg);
+		buf = malloc(len, M_USERFW, M_WAITOK);
+		if (userfw_msg_serialize(msg, buf, len) > 0)
+			userfw_domain_send_to_socket(so, buf, len);
+		free(buf, M_USERFW);
+		userfw_msg_free(msg, M_USERFW);
+	}
+	else
 	{
 		free_action_args(&(rule->action), M_USERFW);
 		free_match_args(&(rule->match), M_USERFW);
 		free(rule, M_USERFW);
 	}
-	free(buf, M_USERFW);
-	userfw_msg_free(msg, M_USERFW);
-	return 0;
+	return ret;
 }
 
 static userfw_cmd_descr base_cmds[] = {
