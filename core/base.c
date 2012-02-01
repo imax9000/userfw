@@ -62,8 +62,8 @@ action_continue(struct mbuf **mb, userfw_chk_args *args, userfw_action *a, userf
 static userfw_action_descr base_actions[] = {
 	{A_ALLOW,	0,	{},	"allow",	action_allow}
 	,{A_DENY,	0,	{},	"deny",	action_deny}
-	,{A_CONTINUE,	0,	{T_ACTION},	"continue-after", action_continue}
-	,{A_STOP,	0,	{T_ACTION},	"stop-after", action_continue}
+	,{A_CONTINUE,	1,	{T_ACTION},	"continue-after", action_continue}
+	,{A_STOP,	1,	{T_ACTION},	"stop-after", action_continue}
 };
 
 static int
