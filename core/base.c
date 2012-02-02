@@ -306,10 +306,27 @@ cmd_list_ruleset(opcode_t op, uint32_t cookie, userfw_arg *args, struct socket *
 static int
 cmd_delete_rule(opcode_t op, uint32_t cookie, userfw_arg *args, struct socket *so, struct thread *th)
 {
-	int num;
+	int num, ret;
+	struct userfw_io_block *msg = NULL;
+	unsigned char *buf;
+	size_t len;
 
 	num = args[0].uint32.value;
-	return userfw_ruleset_delete_rule(&global_rules, num, M_USERFW);
+	ret = userfw_ruleset_delete_rule(&global_rules, num, M_USERFW);
+	if (ret == 0)
+	{
+		msg = userfw_msg_alloc_container(T_CONTAINER, ST_MESSAGE, 2, M_USERFW);
+		userfw_msg_insert_uint32(msg, ST_COOKIE, cookie, 0, M_USERFW);
+		userfw_msg_insert_uint32(msg, ST_ERRNO, 0, 1, M_USERFW);
+
+		len = userfw_msg_calc_size(msg);
+		buf = malloc(len, M_USERFW, M_WAITOK);
+		if (userfw_msg_serialize(msg, buf, len) > 0)
+			userfw_domain_send_to_socket(so, buf, len);
+		free(buf, M_USERFW);
+		userfw_msg_free(msg, M_USERFW);
+	}
+	return ret;
 }
 
 static int
