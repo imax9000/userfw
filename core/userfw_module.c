@@ -67,7 +67,7 @@ userfw_mod_register(userfw_modinfo * mod)
 
 	if (ret == 0)
 	{
-		m = malloc(sizeof(struct modinfo_entry), M_USERFW, M_WAITOK);
+		m = malloc(sizeof(struct modinfo_entry), M_USERFW, M_WAITOK | M_ZERO);
 		m->data = mod;
 		m->refcount = 0;
 		mtx_init(&(m->refcount_mtx), "userfw: modinfo_entry.refcount_mtx", NULL, MTX_DEF);
