@@ -110,8 +110,14 @@ check_packet(struct mbuf **mb, userfw_chk_args *args, userfw_ruleset *ruleset)
 {
 	userfw_rule *rule = ruleset->rule;
 	userfw_cache cache;
-	int ret = 0, matched = 0, continue_ = 0, packet_seen = 1;
+	int ret = 0, matched = 0, continue_ = 0, packet_seen = 0;
 	struct call_stack_entry *cs_entry = NULL;
+
+	if ((*mb) == NULL)
+	{
+		printf("check_packet: *mb == NULL\n");
+		return EACCES;
+	}
 
 	cs_entry = get_stack_entry(*mb, ruleset);
 	if (cs_entry == NULL)
@@ -164,7 +170,8 @@ check_packet(struct mbuf **mb, userfw_chk_args *args, userfw_ruleset *ruleset)
 
 	USERFW_RUNLOCK(ruleset);
 
-	remove_from_stack(*mb, cs_entry);
+	if ((*mb) != NULL)
+		remove_from_stack(*mb, cs_entry);
 
 	if (!matched)
 #ifdef USERFW_DEFAULT_TO_DENY
