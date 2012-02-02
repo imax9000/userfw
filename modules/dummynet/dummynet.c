@@ -38,11 +38,10 @@ action_dummynet(struct mbuf **mb, userfw_chk_args *args, userfw_action *action, 
 			ret = ip_dn_io_ptr(mb, dir, &ipfw_args);
 		else if (mtod(*mb, struct ip *)->ip_v == 6)
 			ret = ip_dn_io_ptr(mb, dir | PROTO_IPV6, &ipfw_args);
-	}
-
-	if ((*mb) != NULL)
-	{
-		SET_HOST_IPLEN(mtod(*mb, struct ip *));
+		if ((*mb) != NULL)
+		{
+			SET_HOST_IPLEN(mtod(*mb, struct ip *));
+		}
 	}
 
 	*continue_ = 0;
