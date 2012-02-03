@@ -16,6 +16,10 @@ CFLAGS+=	-I../include
 KMODDIR?=	/boot/modules
 PREFIX?=	/usr/local
 
+.if defined(SKIP_DOMAIN_STUB)
+CFLAGS+=	-DSKIP_DOMAIN_STUB
+.endif
+
 afterinstall:
 	${INSTALL} -d "${PREFIX}/include/userfw/modules"
 	${INSTALL} base.h "${PREFIX}/include/userfw/modules"
