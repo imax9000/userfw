@@ -19,5 +19,7 @@ PREFIX?=	/usr/local
 afterinstall:
 	${INSTALL} -d "${PREFIX}/include/userfw/modules"
 	${INSTALL} base.h "${PREFIX}/include/userfw/modules"
+	${INSTALL} ip.h "${PREFIX}/include/userfw/modules"
+	${INSTALL} ipv4.h "${PREFIX}/include/userfw/modules"
 
 .include <bsd.kmod.mk>
