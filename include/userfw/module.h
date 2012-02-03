@@ -65,6 +65,7 @@ typedef struct __userfw_chk_args
 
 typedef struct __userfw_match userfw_match;
 typedef struct __userfw_action userfw_action;
+typedef struct __userfw_cmd_descr userfw_cmd_descr;
 
 typedef union __userfw_arg
 {
@@ -117,6 +118,10 @@ typedef int (*userfw_match_dtor)(userfw_match *);
 typedef int (*userfw_action_ctor)(userfw_action *);
 typedef int (*userfw_action_dtor)(userfw_action *);
 typedef int (*userfw_cmd_handler)(opcode_t, uint32_t, userfw_arg *, struct socket *, struct thread *);
+typedef int (*userfw_cmd_access_check)(userfw_module_id_t, const userfw_cmd_descr *, const userfw_arg *, struct socket *, struct thread *);
+
+int userfw_cmd_access_only_root(userfw_module_id_t, const userfw_cmd_descr *, const userfw_arg *, struct socket *, struct thread *);
+int userfw_cmd_access_anybody(userfw_module_id_t, const userfw_cmd_descr *, const userfw_arg *, struct socket *, struct thread *);
 
 typedef struct __userfw_match_descr
 {
@@ -140,14 +145,15 @@ typedef struct __userfw_action_descr
 	userfw_action_dtor	dtor;
 } userfw_action_descr;
 
-typedef struct __userfw_cmd_descr
+struct __userfw_cmd_descr
 {
 	opcode_t	opcode;
 	uint8_t nargs;
 	uint8_t	arg_types[USERFW_ARGS_MAX];
 	char	name[USERFW_NAME_LEN];
 	userfw_cmd_handler	do_cmd;
-} userfw_cmd_descr;
+	userfw_cmd_access_check is_allowed;
+};
 
 struct __userfw_match
 {

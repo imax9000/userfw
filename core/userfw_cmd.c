@@ -31,6 +31,7 @@
 #include "userfw.h"
 #include <userfw/module.h>
 #include "userfw_util.h"
+#include <sys/priv.h>
 
 int parse_arg(unsigned char *, userfw_arg *);
 int parse_arg_list(unsigned char *, int, userfw_arg *, int, uint8_t const *);
@@ -48,7 +49,8 @@ userfw_cmd_dispatch(unsigned char *buf,
 	const userfw_cmd_descr *cmdinfo = NULL;
 	struct userfw_io_header *cmd, *opcode, *cookie = NULL, *mod_id;
 	userfw_arg *parsed_args = NULL;
-	int i;
+	int i, cookie_val;
+	userfw_cmd_access_check access_checker = NULL;
 
 	if (msg->type != T_CONTAINER || (msg->subtype != ST_MESSAGE && msg->subtype != ST_CMDCALL))
 		return EOPNOTSUPP;
@@ -93,10 +95,17 @@ userfw_cmd_dispatch(unsigned char *buf,
 	err = parse_arg_list((unsigned char *)cmd + sizeof(*cmd), cmd->length - sizeof(*cmd),
 				parsed_args, cmdinfo->nargs, cmdinfo->arg_types);
 
+	access_checker = cmdinfo->is_allowed;
+	if (access_checker == NULL)
+		access_checker = userfw_cmd_access_only_root;
+
+	if (err == 0)
+		err = (*access_checker)(dst, cmdinfo, parsed_args, so, td) ? 0 : EPERM;
+
+	cookie_val = cookie != NULL ? (*((uint32_t*)((char*)cookie + sizeof(*cookie)))) : 0;
 	if (err == 0)
 		err = cmdinfo->do_cmd(*((uint32_t*)((char*)opcode + sizeof(*opcode))),
-				cookie != NULL ? (*((uint32_t*)((char*)cookie + sizeof(*cookie)))) : 0,
-				parsed_args, so, td);
+				cookie_val, parsed_args, so, td);
 
 	for(i = 0; i < cmdinfo->nargs; i++)
 	{
@@ -108,7 +117,7 @@ userfw_cmd_dispatch(unsigned char *buf,
 
 	if (err != 0)
 	{
-		reply_error(so, cookie != NULL ? (*((uint32_t*)((char*)cookie + sizeof(*cookie)))) : 0, err);
+		reply_error(so, cookie_val, err);
 	}
 
 	return 0;
@@ -290,4 +299,19 @@ reply_error(struct socket *so, int cookie, int errno)
 		userfw_domain_send_to_socket(so, buf, len);
 	free(buf, M_USERFW);
 	userfw_msg_free(msg, M_USERFW);
+}
+
+int
+userfw_cmd_access_only_root(userfw_module_id_t mod, const userfw_cmd_descr *cmdinfo, const userfw_arg *args, struct socket *so, struct thread *td)
+{
+	if (priv_check(td, PRIV_NETINET_IPFW) == 0)
+		return 1;
+	else
+		return 0;
+}
+
+int
+userfw_cmd_access_anybody(userfw_module_id_t mod, const userfw_cmd_descr *cmdinfo, const userfw_arg *args, struct socket *so, struct thread *td)
+{
+	return 1;
 }
