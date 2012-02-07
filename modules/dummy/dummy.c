@@ -6,6 +6,44 @@
 #include <userfw/io.h>
 #include "dummy.h"
 
+enum dummy_cache_entries
+{
+	TAG
+};
+
+static int
+action_tag(struct mbuf **mb, userfw_chk_args *args, userfw_action *action, userfw_cache *cache, int *continue_)
+{
+	uint32_t val;
+
+	val = action->args[0].uint32.value;
+	if (cache != NULL)
+	{
+		userfw_cache_write(cache, USERFW_DUMMY_MOD, TAG, (void*)(int)val, NULL);
+	}
+	*continue_ = 1;
+	return 0;
+}
+
+static userfw_action_descr dummy_actions[] =
+{
+	{A_TAG,	1,	{T_UINT32},	"tag",	action_tag}
+};
+
+static int
+match_tag(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache)
+{
+	uint32_t val = match->args[0].uint32.value;
+	if (cache != NULL)
+		return val == (uint32_t)(int)userfw_cache_read(cache, USERFW_DUMMY_MOD, TAG) ? 1 : 0;
+	return 0;
+};
+
+static userfw_match_descr dummy_matches[] =
+{
+	{M_TAGGED,	1,	{T_UINT32},	"tagged",	match_tag}
+};
+
 static int
 cmd_echo(opcode_t op, uint32_t cookie, userfw_arg *args, struct socket *so, struct thread *td)
 {
@@ -48,11 +86,11 @@ static userfw_modinfo dummy_modinfo =
 {
 	.id = USERFW_DUMMY_MOD,
 	.name = "dummy",
-	.nactions = 0,
-	.nmatches = 0,
+	.nactions = sizeof(dummy_actions)/sizeof(dummy_actions[0]),
+	.nmatches = sizeof(dummy_matches)/sizeof(dummy_matches[0]),
 	.ncmds = sizeof(dummy_cmds)/sizeof(dummy_cmds[0]),
-	.actions = NULL,
-	.matches = NULL,
+	.actions = dummy_actions,
+	.matches = dummy_matches,
 	.cmds = dummy_cmds
 };
 

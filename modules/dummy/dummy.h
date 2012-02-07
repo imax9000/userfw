@@ -9,4 +9,14 @@ enum dummy_cmds
 	CMD_ECHO
 };
 
+enum dummy_actions
+{
+	A_TAG
+};
+
+enum dummy_matches
+{
+	M_TAGGED
+};
+
 #endif /* DUMMY_H */
