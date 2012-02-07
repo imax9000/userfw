@@ -25,8 +25,8 @@
  */
 
 
-#ifndef DUMMY_H
-#define DUMMY_H
+#ifndef DUMMYNET_H
+#define DUMMYNET_H
 
 #define USERFW_DUMMYNET_MOD	1001
 
@@ -36,4 +36,4 @@ enum dummynet_actions
 	,A_QUEUE
 };
 
-#endif /* DUMMY_H */
+#endif /* DUMMYNET_H */
