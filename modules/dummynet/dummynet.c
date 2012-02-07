@@ -44,7 +44,6 @@ action_dummynet(struct mbuf **mb, userfw_chk_args *args, userfw_action *action, 
 		}
 	}
 
-	*continue_ = 0;
 	return ret;
 };
 
