@@ -27,27 +27,171 @@
 
 #include "userfw.h"
 #include <userfw/cache.h>
+#include <sys/tree.h>
+
+struct userfw_cache_entry
+{
+	RB_ENTRY(userfw_cache_entry)	tree;
+	userfw_module_id_t	mod;
+	uint32_t	id;
+	void	*data;
+	void	(*dtor)(void*);
+};
+
+struct __userfw_cache
+{
+	RB_HEAD(userfw_cache_tree, userfw_cache_entry)	root;
+};
+
+RB_PROTOTYPE_STATIC(userfw_cache_tree, userfw_cache_entry, tree, tree_compare);
+
+static uma_zone_t cache_zone, entry_zone;
 
 int
-userfw_cache_init(userfw_cache * p)
+userfw_cache_init(void)
 {
+	cache_zone = uma_zcreate("userfw cache instances",
+			sizeof(userfw_cache),
+			NULL, NULL,
+			0, 0, 0, 0);
+	entry_zone = uma_zcreate("userfw cache entries",
+			sizeof(struct userfw_cache_entry),
+			NULL, NULL,
+			0, 0, 0, 0);
 	return 0;
 }
 
 int
-userfw_cache_cleanup(userfw_cache * p)
+userfw_cache_uninit(void)
 {
+	uma_zdestroy(cache_zone);
+	uma_zdestroy(entry_zone);
+	return 0;
+}
+
+userfw_cache *
+userfw_cache_alloc(int flags)
+{
+	userfw_cache *ret = NULL;
+
+	ret = uma_zalloc(cache_zone, flags);
+	if (ret != NULL)
+	{
+		RB_INIT(&(ret->root));
+	}
+
+	return ret;
+}
+
+int
+userfw_cache_destroy(userfw_cache * p)
+{
+	struct userfw_cache_entry *entry, *next;
+
+	if (p == NULL)
+		return 0;
+
+	RB_FOREACH_SAFE(entry, userfw_cache_tree, &(p->root), next)
+	{
+		RB_REMOVE(userfw_cache_tree, &(p->root), entry);
+		if (entry->dtor != NULL)
+			entry->dtor(entry->data);
+		uma_zfree(entry_zone, entry);
+	}
+	uma_zfree(cache_zone, p);
 	return 0;
 }
 
 int
-userfw_cache_write(userfw_cache * p, userfw_module_id_t mod, uint16_t id, size_t len, void* data)
+userfw_cache_write(userfw_cache * p, userfw_module_id_t mod, uint32_t id, void* data, void (*dtor)(void*))
 {
-	return 0;	
+	struct userfw_cache_entry find, *entry = NULL;
+
+	if (p == NULL)
+		return ENOENT;
+
+	find.mod = mod;
+	find.id = id;
+	entry = RB_FIND(userfw_cache_tree, &(p->root), &find);
+
+	if (entry != NULL)
+	{
+		if (entry->dtor != NULL)
+			entry->dtor(entry->data);
+		entry->data = data;
+		entry->dtor = dtor;
+	}
+	else
+	{
+		entry = uma_zalloc(entry_zone, M_NOWAIT);
+		if (entry != NULL)
+		{
+			entry->mod = mod;
+			entry->id = id;
+			entry->data = data;
+			entry->dtor = dtor;
+			RB_INSERT(userfw_cache_tree, &(p->root), entry);
+		}
+		else
+			return ENOMEM;
+	}
+
+	return 0;
 }
 
 void *
-userfw_cache_read(userfw_cache * p, userfw_module_id_t mod, uint16_t id, size_t *len)
+userfw_cache_read(userfw_cache * p, userfw_module_id_t mod, uint32_t id)
 {
+	struct userfw_cache_entry find, *entry = NULL;
+
+	if (p == NULL)
+		return NULL;
+
+	find.mod = mod;
+	find.id = id;
+	entry = RB_FIND(userfw_cache_tree, &(p->root), &find);
+	if (entry != NULL)
+		return entry->data;
+
 	return NULL;
 }
+
+int
+userfw_cache_delete(userfw_cache * p, userfw_module_id_t mod, uint32_t id)
+{
+	struct userfw_cache_entry find, *entry = NULL;
+
+	if (p == NULL)
+		return ENOENT;
+
+	find.mod = mod;
+	find.id = id;
+	entry = RB_FIND(userfw_cache_tree, &(p->root), &find);
+	if (entry != NULL)
+	{
+		RB_REMOVE(userfw_cache_tree, &(p->root), entry);
+		if (entry->dtor != NULL)
+			entry->dtor(entry->data);
+		uma_zfree(entry_zone, entry);
+	}
+	else
+		return ENOENT;
+
+	return 0;
+}
+
+static int
+tree_compare(struct userfw_cache_entry *e1, struct userfw_cache_entry *e2)
+{
+	if (e1->mod > e2->mod)
+		return 1;
+	if (e1->mod < e2->mod)
+		return -1;
+	if (e1->id > e2->id)
+		return 1;
+	if (e1->id < e2->id)
+		return -1;
+	return 0;
+}
+
+RB_GENERATE_STATIC(userfw_cache_tree, userfw_cache_entry, tree, tree_compare);

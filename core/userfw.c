@@ -43,6 +43,7 @@ MALLOC_DEFINE(M_USERFW, "userfw", "Memory for userfw rules and cache");
 SYSCTL_NODE(_net, OID_AUTO, userfw, CTLFLAG_RW, 0, "userfw parameters");
 
 #define MTAG_USERFW_CALL_STACK	1325855656
+#define MTAG_USERFW_MATCH_CACHE	1325855657
 
 struct call_stack_entry
 {
@@ -62,6 +63,16 @@ static int is_top_of_stack(struct mbuf *m, userfw_ruleset *ruleset);
 static struct call_stack_entry * add_to_stack(struct mbuf *m, userfw_ruleset *ruleset);
 static int remove_from_stack(struct mbuf *m, struct call_stack_entry *entry);
 
+struct match_cache_mtag
+{
+	struct m_tag	tag;
+	userfw_cache	*cache;
+};
+
+static int attach_cache(struct mbuf *m, userfw_cache *);
+static userfw_cache *get_cache(struct mbuf *m);
+static void cache_dtor(struct m_tag *);
+
 int userfw_init()
 {
 	int err = 0;
@@ -70,6 +81,8 @@ int userfw_init()
 	rw_init(&userfw_modules_list_mtx, "userfw modules list lock");
 
 	userfw_ruleset_init(&global_rules, "userfw global ruleset lock");
+
+	userfw_cache_init();
 
 	if (!err)
 		err = userfw_pfil_register();
@@ -91,6 +104,8 @@ int userfw_uninit()
 
 	if (!err)
 	{
+		userfw_cache_uninit();
+
 		rw_destroy(&userfw_modules_list_mtx);
 
 		userfw_ruleset_uninit(&global_rules, M_USERFW);
@@ -102,14 +117,28 @@ int userfw_uninit()
 int
 userfw_chk(struct mbuf **mb, userfw_chk_args *args)
 {
-	return check_packet(mb, args, &global_rules);
+	userfw_cache *cache = NULL;
+	int ret;
+
+	cache = userfw_cache_alloc(M_NOWAIT);
+	if (cache != NULL && attach_cache(*mb, cache) != 0)
+		userfw_cache_destroy(cache);
+	ret = check_packet(mb, args, &global_rules);
+
+	if (ret != 0 && (*mb) != NULL)
+	{
+		m_freem(*mb);
+		*mb = NULL;
+	}
+
+	return ret;
 }
 
 int
 check_packet(struct mbuf **mb, userfw_chk_args *args, userfw_ruleset *ruleset)
 {
 	userfw_rule *rule = ruleset->rule;
-	userfw_cache cache;
+	userfw_cache *cache;
 	int ret = 0, matched = 0, continue_ = 0, packet_seen = 0;
 	struct call_stack_entry *cs_entry = NULL;
 
@@ -129,7 +158,7 @@ check_packet(struct mbuf **mb, userfw_chk_args *args, userfw_ruleset *ruleset)
 	else
 		packet_seen = 1;
 
-	userfw_cache_init(&cache);
+	cache = get_cache(*mb);
 
 	USERFW_RLOCK(ruleset);
 
@@ -146,14 +175,14 @@ check_packet(struct mbuf **mb, userfw_chk_args *args, userfw_ruleset *ruleset)
 	{
 		if (cs_entry != NULL)
 			cs_entry->rule_number = rule->number;
-		if (rule->match.do_match(mb, args, &(rule->match), &cache))
+		if (rule->match.do_match(mb, args, &(rule->match), cache))
 		{
 			if ((*mb) == NULL)
 			{
 				ret = EACCES;
 				break;
 			}
-			ret = rule->action.do_action(mb, args, &(rule->action), &cache, &continue_);
+			ret = rule->action.do_action(mb, args, &(rule->action), cache, &continue_);
 			if (continue_ == 0)
 			{
 				matched = 1;
@@ -179,8 +208,6 @@ check_packet(struct mbuf **mb, userfw_chk_args *args, userfw_ruleset *ruleset)
 #else
 		ret = 0;
 #endif
-
-	userfw_cache_cleanup(&cache);
 
 	return ret;
 }
@@ -277,4 +304,44 @@ remove_from_stack(struct mbuf *m, struct call_stack_entry *entry)
 		free(entry, M_TEMP);
 	}
 	return 0;
+}
+
+static int
+attach_cache(struct mbuf *m, userfw_cache *p)
+{
+	struct match_cache_mtag *mtag;
+
+	if (p == NULL)
+		return 0;
+	mtag = (struct match_cache_mtag *)m_tag_alloc(MTAG_USERFW_MATCH_CACHE, 0, sizeof(struct match_cache_mtag), M_NOWAIT);
+	if (mtag != NULL)
+	{
+		mtag->cache = p;
+		mtag->tag.m_tag_free = cache_dtor;
+		m_tag_prepend(m, &(mtag->tag));
+	}
+	else
+		return ENOMEM;
+
+	return 0;
+}
+
+static userfw_cache *
+get_cache(struct mbuf *m)
+{
+	struct match_cache_mtag *mtag;
+
+	mtag = (struct match_cache_mtag *)m_tag_locate(m, MTAG_USERFW_MATCH_CACHE, 0, NULL);
+	if (mtag != NULL)
+		return mtag->cache;
+
+	return NULL;
+}
+
+static void
+cache_dtor(struct m_tag *mtag)
+{
+	userfw_cache *cache = ((struct match_cache_mtag *)mtag)->cache;
+	if (cache != NULL)
+		userfw_cache_destroy(cache);
 }

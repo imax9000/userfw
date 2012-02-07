@@ -28,17 +28,21 @@
 #ifndef USERFW_CACHE_H
 #define USERFW_CACHE_H
 
+#ifdef _KERNEL
 #include <userfw/types.h>
 
-typedef struct __userfw_cache
-{
-	
-} userfw_cache;
+struct __userfw_cache;
+typedef struct __userfw_cache userfw_cache;
 
-int userfw_cache_init(userfw_cache *);
-int userfw_cache_cleanup(userfw_cache *);
+int userfw_cache_init(void);
+int userfw_cache_uninit(void);
 
-int userfw_cache_write(userfw_cache *, userfw_module_id_t mod, uint16_t id, size_t len, void* data);
-void *userfw_cache_read(userfw_cache *, userfw_module_id_t mod, uint16_t id, size_t *len);
+userfw_cache * userfw_cache_alloc(int flags);
+int userfw_cache_destroy(userfw_cache *);
+
+int userfw_cache_write(userfw_cache *, userfw_module_id_t mod, uint32_t id, void* data, void (*dtor)(void*));
+void *userfw_cache_read(userfw_cache *, userfw_module_id_t mod, uint32_t id);
+int userfw_cache_delete(userfw_cache *, userfw_module_id_t mod, uint32_t id);
+#endif /* _KERNEL */
 
 #endif /* USERFW_CACHE_H */
