@@ -112,7 +112,7 @@ typedef union __userfw_arg
 #ifdef _KERNEL
 
 typedef int (*userfw_match_fn)(struct mbuf **, userfw_chk_args *, userfw_match *, userfw_cache *);
-typedef int (*userfw_action_fn)(struct mbuf **, userfw_chk_args *, userfw_action *, userfw_cache *, int *);
+typedef int (*userfw_action_fn)(struct mbuf **, userfw_chk_args *, userfw_action *, userfw_cache *, int *, uint32_t);
 typedef int (*userfw_match_ctor)(userfw_match *);
 typedef int (*userfw_match_dtor)(userfw_match *);
 typedef int (*userfw_action_ctor)(userfw_action *);
@@ -122,6 +122,12 @@ typedef int (*userfw_cmd_access_check)(userfw_module_id_t, const userfw_cmd_desc
 
 int userfw_cmd_access_only_root(userfw_module_id_t, const userfw_cmd_descr *, const userfw_arg *, struct socket *, struct thread *);
 int userfw_cmd_access_anybody(userfw_module_id_t, const userfw_cmd_descr *, const userfw_arg *, struct socket *, struct thread *);
+
+/*
+ * USERFW_ACTION_FLAG_SECOND_PASS flag is set when packet returned from other subsystem
+ * and core needs to get return value and continue_ flag from action. So when this flag 
+ * is set action should not do any real work, just return those two values */
+#define USERFW_ACTION_FLAG_SECOND_PASS	0x00000001
 
 typedef struct __userfw_match_descr
 {

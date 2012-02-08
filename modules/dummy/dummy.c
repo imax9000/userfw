@@ -12,12 +12,12 @@ enum dummy_cache_entries
 };
 
 static int
-action_tag(struct mbuf **mb, userfw_chk_args *args, userfw_action *action, userfw_cache *cache, int *continue_)
+action_tag(struct mbuf **mb, userfw_chk_args *args, userfw_action *action, userfw_cache *cache, int *continue_, uint32_t flags)
 {
 	uint32_t val;
 
 	val = action->args[0].uint32.value;
-	if (cache != NULL)
+	if (cache != NULL && (flags & USERFW_ACTION_FLAG_SECOND_PASS) == 0)
 	{
 		userfw_cache_write(cache, USERFW_DUMMY_MOD, TAG, (void*)(int)val, NULL);
 	}

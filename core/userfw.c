@@ -139,8 +139,14 @@ check_packet(struct mbuf **mb, userfw_chk_args *args, userfw_ruleset *ruleset)
 {
 	userfw_rule *rule = ruleset->rule;
 	userfw_cache *cache;
-	int ret = 0, matched = 0, continue_ = 0, packet_seen = 0;
+	int ret = 0, matched = 0, continue_ = 1, packet_seen = 0;
 	struct call_stack_entry *cs_entry = NULL;
+
+#ifdef USERFW_DEFAULT_TO_DENY
+	ret = EACCES;
+#else
+	ret = 0;
+#endif
 
 	if ((*mb) == NULL)
 	{
@@ -166,33 +172,47 @@ check_packet(struct mbuf **mb, userfw_chk_args *args, userfw_ruleset *ruleset)
 	{
 		while(rule != NULL && rule->number < cs_entry->rule_number)
 			rule = rule->next;
-		if (rule != NULL && is_top_of_stack(*mb, ruleset) &&
-				rule->number == cs_entry->rule_number)
-			rule = rule->next;
+		if (rule != NULL && rule->number == cs_entry->rule_number)
+		{
+			if (is_top_of_stack(*mb, ruleset))
+			{
+				/* if we was the one who sent packet to other subsystem,
+				 * just get result and continue_ from rule action */
+				ret = rule->action.do_action(mb, args, &(rule->action), cache, &continue_, USERFW_ACTION_FLAG_SECOND_PASS);
+				rule = rule->next;
+			}
+			else
+			{
+				/* if sub-ruleset sent packet to other subsystem,
+				 * call rule action uncontitionally, since it may have chenged
+				 * and match can return false */
+				ret = rule->action.do_action(mb, args, &(rule->action), cache, &continue_, 0);
+				rule = rule->next;
+			}
+		}
 	}
 
-	while(rule != NULL)
+	if (continue_ != 0) while(rule != NULL)
 	{
 		if (cs_entry != NULL)
 			cs_entry->rule_number = rule->number;
 		if (rule->match.do_match(mb, args, &(rule->match), cache))
 		{
-			if ((*mb) == NULL)
+			continue_ = 0;
+			if ((*mb) == NULL) /* packet consumed by match, something is wrong */
 			{
+				printf("userfw: packet was dropped by match in rule %d\n", rule->number);
 				ret = EACCES;
 				break;
 			}
-			ret = rule->action.do_action(mb, args, &(rule->action), cache, &continue_);
+			ret = rule->action.do_action(mb, args, &(rule->action), cache, &continue_, 0);
+			if ((*mb) == NULL) /* packet consumed by action */
+				break;
 			if (continue_ == 0)
 			{
 				matched = 1;
 				break;
 			}
-		}
-		if ((*mb) == NULL)
-		{
-			ret = EACCES;
-			break;
 		}
 		rule = rule->next;
 	}
@@ -201,13 +221,6 @@ check_packet(struct mbuf **mb, userfw_chk_args *args, userfw_ruleset *ruleset)
 
 	if ((*mb) != NULL)
 		remove_from_stack(*mb, cs_entry);
-
-	if (!matched)
-#ifdef USERFW_DEFAULT_TO_DENY
-		ret = EACCES;
-#else
-		ret = 0;
-#endif
 
 	return ret;
 }

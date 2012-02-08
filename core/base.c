@@ -38,23 +38,23 @@
 #include "userfw_util.h"
 
 static int
-action_allow(struct mbuf **mb, userfw_chk_args *args, userfw_action *a, userfw_cache *cache, int *continue_)
+action_allow(struct mbuf **mb, userfw_chk_args *args, userfw_action *a, userfw_cache *cache, int *continue_, uint32_t flags)
 {
 	*continue_ = 0;
 	return 0;
 }
 
 static int
-action_deny(struct mbuf **mb, userfw_chk_args *args, userfw_action *a, userfw_cache *cache, int *continue_)
+action_deny(struct mbuf **mb, userfw_chk_args *args, userfw_action *a, userfw_cache *cache, int *continue_, uint32_t flags)
 {
 	*continue_ = 0;
 	return EACCES;
 }
 
 static int
-action_continue(struct mbuf **mb, userfw_chk_args *args, userfw_action *a, userfw_cache *cache, int *continue_)
+action_continue(struct mbuf **mb, userfw_chk_args *args, userfw_action *a, userfw_cache *cache, int *continue_, uint32_t flags)
 {
-	int ret = a->do_action(mb, args, a->args[0].action.p, cache, continue_);
+	int ret = a->do_action(mb, args, a->args[0].action.p, cache, continue_, flags);
 	*continue_ = (a->op == A_CONTINUE) ? 1 : 0;
 	return ret;
 }

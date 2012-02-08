@@ -41,33 +41,36 @@
 #include <netinet/ipfw/ip_fw_private.h>
 
 static int
-action_dummynet(struct mbuf **mb, userfw_chk_args *args, userfw_action *action, userfw_cache *cache, int *continue_)
+action_dummynet(struct mbuf **mb, userfw_chk_args *args, userfw_action *action, userfw_cache *cache, int *continue_, uint32_t flags)
 {
 	struct ip_fw_args ipfw_args;
-	int ret = EACCES;
+	int ret = 0;
 	int dir;
 
 	*continue_ = 1;
 	VERIFY_OPCODE2(action, USERFW_DUMMYNET_MOD, A_PIPE, A_QUEUE, 0);
 
-	ipfw_args.m = *mb;
-	ipfw_args.oif = (args->dir == USERFW_OUT) ? args->ifp : NULL;
-	ipfw_args.inp = args->inpcb;
-	ipfw_args.rule.info = action->args[0].uint16.value;
-	if (action->op == A_PIPE)
-		ipfw_args.rule.info |= IPFW_IS_PIPE;
-	dir = (args->dir == USERFW_OUT) ? DIR_OUT : DIR_IN;
-
-	if (ip_dn_io_ptr != NULL)
+	if ((flags & USERFW_ACTION_FLAG_SECOND_PASS) == 0)
 	{
-		SET_NET_IPLEN(mtod(*mb, struct ip *));
-		if (mtod(*mb, struct ip *)->ip_v == 4)
-			ret = ip_dn_io_ptr(mb, dir, &ipfw_args);
-		else if (mtod(*mb, struct ip *)->ip_v == 6)
-			ret = ip_dn_io_ptr(mb, dir | PROTO_IPV6, &ipfw_args);
-		if ((*mb) != NULL)
+		ipfw_args.m = *mb;
+		ipfw_args.oif = (args->dir == USERFW_OUT) ? args->ifp : NULL;
+		ipfw_args.inp = args->inpcb;
+		ipfw_args.rule.info = action->args[0].uint16.value;
+		if (action->op == A_PIPE)
+			ipfw_args.rule.info |= IPFW_IS_PIPE;
+		dir = (args->dir == USERFW_OUT) ? DIR_OUT : DIR_IN;
+
+		if (ip_dn_io_ptr != NULL)
 		{
-			SET_HOST_IPLEN(mtod(*mb, struct ip *));
+			SET_NET_IPLEN(mtod(*mb, struct ip *));
+			if (mtod(*mb, struct ip *)->ip_v == 4)
+				ret = ip_dn_io_ptr(mb, dir, &ipfw_args);
+			else if (mtod(*mb, struct ip *)->ip_v == 6)
+				ret = ip_dn_io_ptr(mb, dir | PROTO_IPV6, &ipfw_args);
+			if ((*mb) != NULL)
+			{
+				SET_HOST_IPLEN(mtod(*mb, struct ip *));
+			}
 		}
 	}
 
