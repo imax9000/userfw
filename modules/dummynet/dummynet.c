@@ -116,7 +116,7 @@ dummynet_modevent(module_t mod, int type, void *p)
 
 static moduledata_t dummynet_mod =
 {
-	"userfw_dummy",
+	"userfw_dummynet",
 	dummynet_modevent,
 	0
 };
