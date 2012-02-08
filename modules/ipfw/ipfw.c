@@ -1,0 +1,143 @@
+/*-
+ * Copyright (C) 2012 by Maxim Ignatenko <gelraen.ua@gmail.com>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/module.h>
+#include <sys/kernel.h>
+#include <userfw/module.h>
+#include <userfw/io.h>
+#include "ipfw.h"
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <net/if.h>
+#include <netinet/ip_fw.h>
+#include <netinet/ip_var.h>
+#include <netinet/ipfw/ip_fw_private.h>
+
+static int
+match_ipfw_table_ctor(userfw_match *match)
+{
+	if (match->args[0].uint16.value >= IPFW_TABLES_MAX)
+		return EINVAL;
+	return 0;
+}
+
+static int
+match_ipfw_table(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache)
+{
+	int ret = 0;
+	struct ip_fw_chain *chain = &V_layer3_chain;
+	uint32_t tablearg = 0;
+	uint32_t key;
+	uint16_t table = match->args[0].uint16.value;
+
+
+	VERIFY_OPCODE2(match, USERFW_IPFW_MOD, M_LOOKUP_SRC, M_LOOKUP_DST, 0);
+
+	if (cache != NULL)
+	{
+		tablearg = (uint32_t)(int)userfw_cache_read(cache, USERFW_IPFW_MOD,
+				match->op == M_LOOKUP_SRC ? table : table + IPFW_TABLES_MAX);
+		if (tablearg != 0)
+			return tablearg;
+	}
+
+	if (mtod(*mb, struct ip *)->ip_v != 4)
+		return 0;
+
+	if (match->op == M_LOOKUP_SRC)
+		key = mtod(*mb, struct ip *)->ip_src.s_addr;
+	else /* if (match->op == M_LOOKUP_DST) */
+		key = mtod(*mb, struct ip *)->ip_dst.s_addr;
+
+	IPFW_RLOCK(chain);
+
+	ret = ipfw_lookup_table(chain, table, key, &tablearg);
+
+	IPFW_RUNLOCK(chain);
+
+	if (ret != 0)
+		ret = tablearg != 0 ? tablearg : 1;
+
+	if (cache != NULL)
+		userfw_cache_write(cache, USERFW_IPFW_MOD,
+				match->op == M_LOOKUP_SRC ? table : table + IPFW_TABLES_MAX,
+				(void*)(int)tablearg, NULL);
+
+	return ret;
+};
+
+static userfw_match_descr ipfw_matches[] =
+{
+	{M_LOOKUP_SRC,	1,	{T_UINT16},	"lookup-src-ip",	match_ipfw_table,	match_ipfw_table_ctor}
+	,{M_LOOKUP_DST,	1,	{T_UINT16},	"lookup-dst-ip",	match_ipfw_table,	match_ipfw_table_ctor}
+};
+
+static userfw_modinfo ipfw_modinfo =
+{
+	.id = USERFW_IPFW_MOD,
+	.name = "ipfw",
+	.nactions = 0,
+	.nmatches = sizeof(ipfw_matches)/sizeof(ipfw_matches[0]),
+	.ncmds = 0,
+	.actions = NULL,
+	.matches = ipfw_matches,
+	.cmds = NULL
+};
+
+static int
+ipfw_modevent(module_t mod, int type, void *p)
+{
+	int err = 0;
+	switch(type)
+	{
+	case MOD_LOAD:
+		err = userfw_mod_register(&ipfw_modinfo);
+		break;
+	case MOD_UNLOAD:
+		err = userfw_mod_unregister(USERFW_IPFW_MOD);
+		break;
+	default:
+		err = EOPNOTSUPP;
+		break;
+	}
+	return err;
+}
+
+static moduledata_t ipfw_mod =
+{
+	"userfw_ipfw",
+	ipfw_modevent,
+	0
+};
+
+MODULE_VERSION(userfw_ipfw, 1);
+MODULE_DEPEND(userfw_ipfw, userfw_core, 1, 1, 1);
+MODULE_DEPEND(userfw_ipfw, ipfw, 2, 2, 2);
+
+DECLARE_MODULE(userfw_ipfw, ipfw_mod, SI_SUB_USERFW, SI_ORDER_USERFW_MOD);
