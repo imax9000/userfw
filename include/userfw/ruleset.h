@@ -38,7 +38,7 @@ typedef struct __userfw_rule
 {
 	struct __userfw_rule *next;
 
-	uint16_t	number;
+	uint32_t	number;
 	userfw_action	action;
 	userfw_match	match;
 } userfw_rule;
@@ -67,7 +67,7 @@ void userfw_ruleset_uninit(userfw_ruleset *, struct malloc_type *);
 int userfw_ruleset_insert_rule(userfw_ruleset *, userfw_rule *);
 
 /** Deletes single rule */
-int userfw_ruleset_delete_rule(userfw_ruleset *, int, struct malloc_type *);
+int userfw_ruleset_delete_rule(userfw_ruleset *, uint32_t, struct malloc_type *);
 
 /** Replaces whole ruleset with new chain of rules and drops old chain */
 int userfw_ruleset_replace(userfw_ruleset *, userfw_rule *head, struct malloc_type *);

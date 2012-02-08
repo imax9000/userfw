@@ -107,7 +107,7 @@ userfw_ruleset_insert_rule(userfw_ruleset *ruleset, userfw_rule *rule)
 }
 
 int
-userfw_ruleset_delete_rule(userfw_ruleset *ruleset, int num, struct malloc_type *mtype)
+userfw_ruleset_delete_rule(userfw_ruleset *ruleset, uint32_t num, struct malloc_type *mtype)
 {
 	userfw_rule *p, *p2;
 	int err = 0;
