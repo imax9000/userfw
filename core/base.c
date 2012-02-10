@@ -116,12 +116,20 @@ match_invert(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userf
 		return 1;
 }
 
+static int
+match_any(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache, userfw_arg *marg)
+{
+	VERIFY_OPCODE(match, USERFW_BASE_MOD, M_ANY, 0);
+	return 1;
+}
+
 static userfw_match_descr base_matches[] = {
 	{M_IN,	0,	{},	"in",	match_direction}
 	,{M_OUT,	0,	{},	"out",	match_direction}
 	,{M_OR,	2,	{T_MATCH, T_MATCH},	"or",	match_logic}
 	,{M_AND,	2,	{T_MATCH, T_MATCH}, "and",	match_logic}
 	,{M_NOT,	1,	{T_MATCH},	"not",	match_invert}
+	,{M_ANY,	0,	{},	"any",	match_any}
 };
 
 static struct userfw_io_block *

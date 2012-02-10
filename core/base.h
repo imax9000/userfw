@@ -47,6 +47,7 @@ enum __base_matches
 	,M_OR
 	,M_AND
 	,M_NOT
+	,M_ANY
 };
 
 enum __base_cmds
