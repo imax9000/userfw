@@ -310,8 +310,7 @@ cmd_delete_rule(opcode_t op, uint32_t cookie, userfw_arg *args, struct socket *s
 
 	num = args[0].uint32.value;
 	ret = userfw_ruleset_delete_rule(&global_rules, num, M_USERFW);
-	if (ret == 0)
-		userfw_msg_reply_error(so, cookie, ret);
+	userfw_msg_reply_error(so, cookie, ret);
 
 	return ret;
 }
@@ -335,11 +334,8 @@ cmd_insert_rule(opcode_t op, uint32_t cookie, userfw_arg *args, struct socket *s
 	args[2].type = T_INVAL;
 
 	ret = userfw_ruleset_insert_rule(&global_rules, rule);
-	if (ret == 0)
-	{
-		userfw_msg_reply_error(so, cookie, ret);
-	}
-	else
+	userfw_msg_reply_error(so, cookie, ret);
+	if (ret != 0)
 	{
 		free_rule(rule, M_USERFW);
 	}
@@ -352,10 +348,7 @@ cmd_flush_ruleset(opcode_t op, uint32_t cookie, userfw_arg *args, struct socket 
 	int ret;
 
 	ret = userfw_ruleset_replace(&global_rules, NULL, M_USERFW);
-	if (ret == 0)
-	{
-		userfw_msg_reply_error(so, cookie, ret);
-	}
+	userfw_msg_reply_error(so, cookie, ret);
 
 	return ret;
 }

@@ -114,11 +114,6 @@ userfw_cmd_dispatch(unsigned char *buf,
 
 	free(parsed_args, M_USERFW);
 
-	if (err != 0)
-	{
-		userfw_msg_reply_error(so, cookie_val, err);
-	}
-
 	return 0;
 }
 
