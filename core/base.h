@@ -56,6 +56,7 @@ enum __base_cmds
 	,CMD_LIST_RULESET
 	,CMD_DELETE_RULE
 	,CMD_INSERT_RULE
+	,CMD_FLUSH_RULESET
 };
 
 #endif /* USERFW_MOD_BASE_H */

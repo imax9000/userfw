@@ -346,12 +346,27 @@ cmd_insert_rule(opcode_t op, uint32_t cookie, userfw_arg *args, struct socket *s
 	return ret;
 }
 
+static int
+cmd_flush_ruleset(opcode_t op, uint32_t cookie, userfw_arg *args, struct socket *so, struct thread *th)
+{
+	int ret;
+
+	ret = userfw_ruleset_replace(&global_rules, NULL, M_USERFW);
+	if (ret == 0)
+	{
+		userfw_msg_reply_error(so, cookie, ret);
+	}
+
+	return ret;
+}
+
 static userfw_cmd_descr base_cmds[] = {
 	{CMD_MODLIST,	0,	{},	"modlist", cmd_modlist,	userfw_cmd_access_anybody}
 	,{CMD_MODINFO,	1,	{T_UINT32}, "modinfo", cmd_modinfo,	userfw_cmd_access_anybody}
 	,{CMD_LIST_RULESET,	0,	{},	"list",	cmd_list_ruleset}
 	,{CMD_DELETE_RULE,	1,	{T_UINT32}, "delete", cmd_delete_rule}
 	,{CMD_INSERT_RULE,	3,	{T_UINT32,T_ACTION,T_MATCH},	"add",	cmd_insert_rule}
+	,{CMD_FLUSH_RULESET,	0,	{},	"flush",	cmd_flush_ruleset}
 };
 
 static userfw_modinfo base_modinfo =
