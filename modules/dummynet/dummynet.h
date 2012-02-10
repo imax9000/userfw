@@ -34,6 +34,8 @@ enum dummynet_actions
 {
 	A_PIPE
 	,A_QUEUE
+	,A_MPIPE
+	,A_MQUEUE
 };
 
 #endif /* DUMMYNET_H */

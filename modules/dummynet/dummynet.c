@@ -41,46 +41,89 @@
 #include <netinet/ipfw/ip_fw_private.h>
 
 static int
-action_dummynet(struct mbuf **mb, userfw_chk_args *args, userfw_action *action, userfw_cache *cache, int *continue_, uint32_t flags)
+send_to_dummynet(struct mbuf **mb, userfw_chk_args *args, uint16_t num, int is_pipe)
 {
 	struct ip_fw_args ipfw_args;
 	int ret = 0;
 	int dir;
+
+	ipfw_args.m = *mb;
+	ipfw_args.oif = (args->dir == USERFW_OUT) ? args->ifp : NULL;
+	ipfw_args.inp = args->inpcb;
+	ipfw_args.rule.info = num;
+	if (is_pipe)
+		ipfw_args.rule.info |= IPFW_IS_PIPE;
+	dir = (args->dir == USERFW_OUT) ? DIR_OUT : DIR_IN;
+
+	if (ip_dn_io_ptr != NULL)
+	{
+		SET_NET_IPLEN(mtod(*mb, struct ip *));
+		if (mtod(*mb, struct ip *)->ip_v == 4)
+			ret = ip_dn_io_ptr(mb, dir, &ipfw_args);
+		else if (mtod(*mb, struct ip *)->ip_v == 6)
+			ret = ip_dn_io_ptr(mb, dir | PROTO_IPV6, &ipfw_args);
+		if ((*mb) != NULL)
+		{
+			SET_HOST_IPLEN(mtod(*mb, struct ip *));
+		}
+	}
+	return ret;
+}
+
+static int
+action_dummynet(struct mbuf **mb, userfw_chk_args *args, userfw_action *action, userfw_cache *cache, int *continue_, uint32_t flags)
+{
+	int ret = 0;
 
 	*continue_ = 1;
 	VERIFY_OPCODE2(action, USERFW_DUMMYNET_MOD, A_PIPE, A_QUEUE, 0);
 
 	if ((flags & USERFW_ACTION_FLAG_SECOND_PASS) == 0)
 	{
-		ipfw_args.m = *mb;
-		ipfw_args.oif = (args->dir == USERFW_OUT) ? args->ifp : NULL;
-		ipfw_args.inp = args->inpcb;
-		ipfw_args.rule.info = action->args[0].uint16.value;
-		if (action->op == A_PIPE)
-			ipfw_args.rule.info |= IPFW_IS_PIPE;
-		dir = (args->dir == USERFW_OUT) ? DIR_OUT : DIR_IN;
-
-		if (ip_dn_io_ptr != NULL)
-		{
-			SET_NET_IPLEN(mtod(*mb, struct ip *));
-			if (mtod(*mb, struct ip *)->ip_v == 4)
-				ret = ip_dn_io_ptr(mb, dir, &ipfw_args);
-			else if (mtod(*mb, struct ip *)->ip_v == 6)
-				ret = ip_dn_io_ptr(mb, dir | PROTO_IPV6, &ipfw_args);
-			if ((*mb) != NULL)
-			{
-				SET_HOST_IPLEN(mtod(*mb, struct ip *));
-			}
-		}
+		ret = send_to_dummynet(mb, args, action->args[0].uint16.value, action->op == A_PIPE);
 	}
 
 	return ret;
-};
+}
+
+static int
+action_dummynet_match(struct mbuf **mb, userfw_chk_args *args, userfw_action *action, userfw_cache *cache, int *continue_, uint32_t flags)
+{
+	int ret = 0, match_ret = 0;
+	uint16_t num;
+	userfw_arg matcharg;
+
+	*continue_ = 1;
+	VERIFY_OPCODE2(action, USERFW_DUMMYNET_MOD, A_MPIPE, A_MQUEUE, 0);
+
+	if ((flags & USERFW_ACTION_FLAG_SECOND_PASS) == 0)
+	{
+		matcharg.type = T_INVAL;
+		match_ret = action->args[0].match.p->do_match(mb, args, action->args[0].match.p, cache, &matcharg);
+		if (match_ret != 0)
+		{
+			switch(matcharg.type)
+			{
+			case T_UINT16:
+				num = matcharg.uint16.value;
+				ret = send_to_dummynet(mb, args, num, action->op == A_MPIPE);
+				break;
+			case T_UINT32:
+				num = matcharg.uint32.value;
+				ret = send_to_dummynet(mb, args, num, action->op == A_MPIPE);
+				break;
+			}
+		}
+	}
+	return ret;
+}
 
 static userfw_action_descr dummynet_actions[] =
 {
 	{A_PIPE,	1,	{T_UINT16},	"pipe",	action_dummynet}
 	,{A_QUEUE,	1,	{T_UINT16},	"queue",	action_dummynet}
+	,{A_MPIPE,	1,	{T_MATCH},	"match-pipe",	action_dummynet_match}
+	,{A_MQUEUE,	1,	{T_MATCH},	"match-queue",	action_dummynet_match}
 };
 
 static userfw_modinfo dummynet_modinfo =
