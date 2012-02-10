@@ -204,6 +204,7 @@ const userfw_cmd_descr *userfw_mod_find_cmd(userfw_module_id_t, opcode_t);
 int userfw_mod_inc_refcount(userfw_module_id_t);
 int userfw_mod_dec_refcount(userfw_module_id_t);
 
+#ifndef SKIP_OPCODE_VERIFICATION
 #define VERIFY_OPCODE(obj, module, opcode, retval) do { \
 		if ((obj)->mod != (module) || (obj)->op != (opcode)) \
 		{ \
@@ -224,6 +225,11 @@ int userfw_mod_dec_refcount(userfw_module_id_t);
 			printf("userfw: %s: called with wrong opcode %d:%d\n", __func__, (obj)->mod, (obj)->op); \
 			return (retval); \
 		} } while(0)
+#else /* SKIP_OPCODE_VERIFICATION */
+#define VERIFY_OPCODE(obj, module, opcode, retval)
+#define VERIFY_OPCODE2(obj, module, opcode1, opcode2, retval)
+#define VERIFY_OPCODE3(obj, module, opcode1, opcode2, opcode3, retval)
+#endif /* SKIP_OPCODE_VERIFICATION */
 
 #endif /* _KERNEL */
 

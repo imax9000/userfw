@@ -2,10 +2,16 @@ project(userfw_core C)
 
 set(KMODDIR	"/boot/modules" CACHE PATH "Kernel modules directory")
 set(DOMAIN_STUB ON CACHE BOOL "Use AF_USERFW domain stub to allow kldunload userfw.ko")
+set(OPCODE_VERIFICATION OFF CACHE BOOL "Use runtime opcode verification")
+
+set(MAKE_ARGS "")
+if (NOT OPCODE_VERIFICATION)
+	set(MAKE_ARGS "${MAKE_ARGS} SKIP_OPCODE_VERIFICATION=1")
+endif (NOT OPCODE_VERIFICATION)
 
 if (DOMAIN_STUB)
 	add_custom_command(OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/userfw.ko"
-		COMMAND make
+		COMMAND make ${MAKE_ARGS}
 		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 	add_custom_command(OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/domain_stub/userfw_domain_stub.ko"
 		COMMAND make
@@ -14,7 +20,7 @@ if (DOMAIN_STUB)
 		DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/domain_stub/userfw_domain_stub.ko")
 else (DOMAIN_STUB)
 	add_custom_command(OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/userfw.ko"
-		COMMAND make SKIP_DOMAIN_STUB=1
+		COMMAND make SKIP_DOMAIN_STUB=1 ${MAKE_ARGS}
 		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 endif (DOMAIN_STUB)
 
