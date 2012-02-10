@@ -31,7 +31,7 @@ static userfw_action_descr dummy_actions[] =
 };
 
 static int
-match_tag(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache)
+match_tag(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache, userfw_arg *marg)
 {
 	uint32_t val = match->args[0].uint32.value;
 	if (cache != NULL)

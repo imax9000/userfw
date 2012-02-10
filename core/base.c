@@ -67,7 +67,7 @@ static userfw_action_descr base_actions[] = {
 };
 
 static int
-match_direction(struct mbuf **mb, userfw_chk_args *args, userfw_match *m, userfw_cache *cache)
+match_direction(struct mbuf **mb, userfw_chk_args *args, userfw_match *m, userfw_cache *cache, userfw_arg *marg)
 {
 	VERIFY_OPCODE2(m, USERFW_BASE_MOD, M_IN, M_OUT, 0);
 
@@ -78,7 +78,7 @@ match_direction(struct mbuf **mb, userfw_chk_args *args, userfw_match *m, userfw
 }
 
 static int
-match_logic(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache)
+match_logic(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache, userfw_arg *marg)
 {
 	userfw_match	*match1, *match2;
 	int	ret1;
@@ -88,7 +88,7 @@ match_logic(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw
 	match1 = match->args[0].match.p;
 	match2 = match->args[1].match.p;
 
-	ret1 = match1->do_match(mb, args, match1, cache);
+	ret1 = match1->do_match(mb, args, match1, cache, marg);
 
 	if ((*mb) == NULL)
 		return 0;
@@ -99,18 +99,18 @@ match_logic(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw
 	if (ret1 != 0 && match->op == M_OR)
 		return ret1;
 
-	return match2->do_match(mb, args, match2, cache);
+	return match2->do_match(mb, args, match2, cache, marg);
 }
 
 static int
-match_invert(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache)
+match_invert(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache, userfw_arg *marg)
 {
 	userfw_match	*match1;
 
 	VERIFY_OPCODE(match, USERFW_BASE_MOD, M_NOT, 0);
 
 	match1 = match->args[0].match.p;
-	if (match1->do_match(mb, args, match1, cache))
+	if (match1->do_match(mb, args, match1, cache, marg))
 		return 0;
 	else
 		return 1;

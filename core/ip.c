@@ -44,7 +44,7 @@
 #include "userfw_util.h"
 
 static int
-match_port(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache)
+match_port(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache, userfw_arg *marg)
 {
 	struct mbuf	*m = *mb;
 	uint16_t	val = 0;
@@ -132,7 +132,7 @@ match_port(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_
 };
 
 static int
-match_ip_ver(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache)
+match_ip_ver(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache, userfw_arg *marg)
 {
 	struct mbuf *m = *mb;
 	int needed_ver = 0;
@@ -156,7 +156,7 @@ match_ip_ver(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userf
 }
 
 static int
-match_ip_proto(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache)
+match_ip_proto(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache, userfw_arg *marg)
 {
 	struct mbuf *m = *mb;
 	struct ip *ip = mtod(m, struct ip *);

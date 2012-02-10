@@ -196,7 +196,7 @@ check_packet(struct mbuf **mb, userfw_chk_args *args, userfw_ruleset *ruleset)
 	{
 		if (cs_entry != NULL)
 			cs_entry->rule_number = rule->number;
-		if (rule->match.do_match(mb, args, &(rule->match), cache))
+		if (rule->match.do_match(mb, args, &(rule->match), cache, NULL))
 		{
 			continue_ = 0;
 			if ((*mb) == NULL) /* packet consumed by match, something is wrong */

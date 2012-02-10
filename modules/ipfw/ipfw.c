@@ -48,46 +48,67 @@ match_ipfw_table_ctor(userfw_match *match)
 }
 
 static int
-match_ipfw_table(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache)
+match_ipfw_table(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache, userfw_arg *marg)
 {
-	int ret = 0;
+	int ret = 0, lookup_from_cache = 0;
 	struct ip_fw_chain *chain = &V_layer3_chain;
 	uint32_t tablearg = 0;
 	uint32_t key;
 	uint16_t table = match->args[0].uint16.value;
-
+#define cache_id (match->op == M_LOOKUP_SRC ? table : table + IPFW_TABLES_MAX)
 
 	VERIFY_OPCODE2(match, USERFW_IPFW_MOD, M_LOOKUP_SRC, M_LOOKUP_DST, 0);
 
-	if (cache != NULL)
+	if (cache != NULL && 
+			(lookup_from_cache = (uint32_t)(int)userfw_cache_read(cache, USERFW_IPFW_MOD,
+						IPFW_TABLES_MAX*4 + cache_id)) != 0)
 	{
+		ret = (uint32_t)(int)userfw_cache_read(cache, USERFW_IPFW_MOD, cache_id);
 		tablearg = (uint32_t)(int)userfw_cache_read(cache, USERFW_IPFW_MOD,
-				match->op == M_LOOKUP_SRC ? table : table + IPFW_TABLES_MAX);
-		if (tablearg != 0)
-			return tablearg;
+				IPFW_TABLES_MAX*2 + cache_id);
+	}
+	else
+	{
+		if (mtod(*mb, struct ip *)->ip_v != 4)
+			return 0;
+
+		if (match->op == M_LOOKUP_SRC)
+			key = mtod(*mb, struct ip *)->ip_src.s_addr;
+		else /* if (match->op == M_LOOKUP_DST) */
+			key = mtod(*mb, struct ip *)->ip_dst.s_addr;
+
+		IPFW_RLOCK(chain);
+
+		ret = ipfw_lookup_table(chain, table, key, &tablearg);
+
+		IPFW_RUNLOCK(chain);
+
+		if (cache != NULL)
+		{
+			userfw_cache_write(cache, USERFW_IPFW_MOD, cache_id, (void*)(int)ret, NULL);
+			userfw_cache_write(cache, USERFW_IPFW_MOD, IPFW_TABLES_MAX*2 + cache_id,
+					(void*)(int)tablearg, NULL);
+			userfw_cache_write(cache, USERFW_IPFW_MOD, IPFW_TABLES_MAX*4 + cache_id,
+					(void*)1, NULL);
+		}
 	}
 
-	if (mtod(*mb, struct ip *)->ip_v != 4)
-		return 0;
-
-	if (match->op == M_LOOKUP_SRC)
-		key = mtod(*mb, struct ip *)->ip_src.s_addr;
-	else /* if (match->op == M_LOOKUP_DST) */
-		key = mtod(*mb, struct ip *)->ip_dst.s_addr;
-
-	IPFW_RLOCK(chain);
-
-	ret = ipfw_lookup_table(chain, table, key, &tablearg);
-
-	IPFW_RUNLOCK(chain);
-
-	if (ret != 0)
-		ret = tablearg != 0 ? tablearg : 1;
-
-	if (cache != NULL)
-		userfw_cache_write(cache, USERFW_IPFW_MOD,
-				match->op == M_LOOKUP_SRC ? table : table + IPFW_TABLES_MAX,
-				(void*)(int)tablearg, NULL);
+	if (marg != NULL)
+	{
+		switch (marg->type)
+		{
+		case T_UINT16:
+			marg->uint16.value = tablearg;
+			break;
+		case T_UINT32:
+			marg->uint32.value = tablearg;
+			break;
+		default:
+			marg->type = T_UINT32;
+			marg->uint32.value = tablearg;
+			break;
+		}
+	}
 
 	return ret;
 };

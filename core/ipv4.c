@@ -40,7 +40,7 @@
 #include "userfw_util.h"
 
 static int
-match_ipv4(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache)
+match_ipv4(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache, userfw_arg *margs)
 {
 	struct mbuf	*m = *mb;
 	uint32_t	val = 0;
