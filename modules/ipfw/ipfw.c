@@ -113,20 +113,61 @@ match_ipfw_table(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, u
 	return ret;
 };
 
+static int
+match_ipfw_tag(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache, userfw_arg *marg)
+{
+	VERIFY_OPCODE(match, USERFW_IPFW_MOD, M_TAGGED, 0);
+	if (m_tag_locate(*mb, MTAG_IPFW, match->args[0].uint32.value, NULL) != NULL)
+		return 1;
+	return 0;
+}
+
 static userfw_match_descr ipfw_matches[] =
 {
 	{M_LOOKUP_SRC,	1,	{T_UINT16},	"lookup-src-ip",	match_ipfw_table,	match_ipfw_table_ctor}
 	,{M_LOOKUP_DST,	1,	{T_UINT16},	"lookup-dst-ip",	match_ipfw_table,	match_ipfw_table_ctor}
+	,{M_TAGGED,	1,	{T_UINT32},	"tagged",	match_ipfw_tag}
+};
+
+static int
+action_ipfw_tag(struct mbuf **mb, userfw_chk_args *args, userfw_action *action, userfw_cache *cache, int *continue_, uint32_t flags)
+{
+	struct m_tag *mtag = NULL;
+
+	*continue_ = 1;
+	VERIFY_OPCODE2(action, USERFW_IPFW_MOD, A_TAG, A_UNTAG, 0);
+
+	switch(action->op)
+	{
+	case A_TAG:
+		mtag = m_tag_alloc(MTAG_IPFW, action->args[0].uint32.value, 0, M_NOWAIT);
+		if (mtag != NULL)
+			m_tag_prepend(*mb, mtag);
+		break;
+	case A_UNTAG:
+		mtag = m_tag_locate(*mb, MTAG_IPFW, action->args[0].uint32.value, NULL);
+		if (mtag != NULL)
+			m_tag_delete(*mb, mtag);
+		break;
+	}
+
+	return 0;
+}
+
+static userfw_action_descr ipfw_actions[] =
+{
+	{A_TAG,	1,	{T_UINT32},	"tag",	action_ipfw_tag}
+	,{A_UNTAG,	1,	{T_UINT32},	"untag",	action_ipfw_tag}
 };
 
 static userfw_modinfo ipfw_modinfo =
 {
 	.id = USERFW_IPFW_MOD,
 	.name = "ipfw",
-	.nactions = 0,
+	.nactions = sizeof(ipfw_actions)/sizeof(ipfw_actions[0]),
 	.nmatches = sizeof(ipfw_matches)/sizeof(ipfw_matches[0]),
 	.ncmds = 0,
-	.actions = NULL,
+	.actions = ipfw_actions,
 	.matches = ipfw_matches,
 	.cmds = NULL
 };

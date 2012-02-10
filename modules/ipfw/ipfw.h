@@ -34,6 +34,13 @@ enum ipfw_matches
 {
 	M_LOOKUP_SRC
 	,M_LOOKUP_DST
+	,M_TAGGED
+};
+
+enum ipfw_actions
+{
+	A_TAG
+	,A_UNTAG
 };
 
 #endif /* IPFW_H */
