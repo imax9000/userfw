@@ -311,3 +311,22 @@ userfw_msg_insert_arg(struct userfw_io_block *msg, uint32_t subtype, const userf
 	}
 	return 0;
 }
+
+void
+userfw_msg_reply_error(struct socket *so, int cookie, int errno)
+{
+	struct userfw_io_block *msg;
+	size_t len;
+	unsigned char *buf;
+
+	msg = userfw_msg_alloc_container(T_CONTAINER, ST_MESSAGE, 2, M_USERFW);
+	userfw_msg_insert_uint32(msg, ST_COOKIE, cookie, 0, M_USERFW);
+	userfw_msg_insert_uint32(msg, ST_ERRNO, errno, 1, M_USERFW);
+
+	len = userfw_msg_calc_size(msg);
+	buf = malloc(len, M_USERFW, M_WAITOK);
+	if (userfw_msg_serialize(msg, buf, len) > 0)
+		userfw_domain_send_to_socket(so, buf, len);
+	free(buf, M_USERFW);
+	userfw_msg_free(msg, M_USERFW);
+}

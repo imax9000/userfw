@@ -131,6 +131,8 @@ int userfw_msg_insert_ipv6(struct userfw_io_block *parent, uint32_t subtype, con
 int userfw_msg_insert_action(struct userfw_io_block *parent, uint32_t subtype, const userfw_action *, uint32_t pos, struct malloc_type *);
 int userfw_msg_insert_match(struct userfw_io_block *parent, uint32_t subtype, const userfw_match *, uint32_t pos, struct malloc_type *);
 int userfw_msg_insert_arg(struct userfw_io_block *parent, uint32_t subtype, const userfw_arg *, uint32_t pos, struct malloc_type *);
+
+void userfw_msg_reply_error(struct socket *so, int cookie, int errno);
 #endif /* _KERNEL */
 
 #endif /* USERFW_IO_H */
