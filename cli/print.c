@@ -158,9 +158,23 @@ print_simple_block(const struct userfw_io_block *msg)
 			addr.s_addr = msg->data.ipv4.addr;
 			inet_ntop(AF_INET, &addr, buf, INET_ADDRSTRLEN + 1);
 			printf("%s", buf);
-			addr.s_addr = msg->data.ipv4.mask;
-			inet_ntop(AF_INET, &addr, buf, INET_ADDRSTRLEN + 1);
-			printf(":%s", buf);
+			int masklen = 0;
+			uint32_t mask = ntohl(msg->data.ipv4.mask);
+			while(mask & 0x80000000)
+			{
+				mask <<= 1;
+				masklen++;
+			}
+			if (mask != 0)
+			{
+				addr.s_addr = msg->data.ipv4.mask;
+				inet_ntop(AF_INET, &addr, buf, INET_ADDRSTRLEN + 1);
+				printf(":%s", buf);
+			}
+			else if (masklen != 32)
+			{
+				printf("/%d", masklen);
+			}
 			free(buf);
 		}
 		else
