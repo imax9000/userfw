@@ -218,6 +218,28 @@ match_ip_proto_ctor(userfw_match *match)
 	return ENOENT;
 }
 
+static int
+match_packet_len(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache, userfw_arg *marg)
+{
+	uint32_t len = 0;
+
+	VERIFY_OPCODE(match, USERFW_IP_MOD, M_PKT_LEN, 0);
+	switch(mtod(*mb, struct ip *)->ip_v)
+	{
+	case 4:
+		len = mtod(*mb, struct ip *)->ip_len; /* XXX: already in host byte order */
+		break;
+	case 6:
+		len = ntohs(mtod(*mb, struct ip6_hdr *)->ip6_plen) + sizeof(struct ip6_hdr);
+		break;
+	}
+
+	if (match->args[0].uint32.value == len)
+		return 1;
+	else
+		return 0;
+}
+
 static userfw_match_descr ip_matches[] = {
 	{M_SRCPORT,	1,	{T_UINT16},	"src-port",	match_port}
 	,{M_DSTPORT,	1,	{T_UINT16},	"dst-port",	match_port}
@@ -225,6 +247,7 @@ static userfw_match_descr ip_matches[] = {
 	,{M_IPV6,	0,	{},	"ipv6",	match_ip_ver}
 	,{M_IP_PROTO,	1,	{T_UINT16},	"proto-num",	match_ip_proto}
 	,{M_IP_PROTO_NAME,	1, {T_STRING},	"proto",	match_ip_proto, match_ip_proto_ctor}
+	,{M_PKT_LEN,	1,	{T_UINT32},	"packet-len",	match_packet_len}
 };
 
 static userfw_modinfo ip_modinfo =

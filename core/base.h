@@ -48,6 +48,7 @@ enum __base_matches
 	,M_AND
 	,M_NOT
 	,M_ANY
+	,M_FRAME_LEN
 };
 
 enum __base_cmds

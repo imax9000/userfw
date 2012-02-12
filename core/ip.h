@@ -38,6 +38,7 @@ enum __ip_matches
 	,M_IPV6
 	,M_IP_PROTO
 	,M_IP_PROTO_NAME
+	,M_PKT_LEN
 };
 
 #endif /* USERFW_MOD_IP_H */

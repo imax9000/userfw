@@ -123,6 +123,16 @@ match_any(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_c
 	return 1;
 }
 
+static int
+match_frame_len(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache, userfw_arg *marg)
+{
+	VERIFY_OPCODE(match, USERFW_BASE_MOD, M_FRAME_LEN, 0);
+	if ((*mb)->m_pkthdr.len == match->args[0].uint32.value)
+		return 1;
+	else
+		return 0;
+}
+
 static userfw_match_descr base_matches[] = {
 	{M_IN,	0,	{},	"in",	match_direction}
 	,{M_OUT,	0,	{},	"out",	match_direction}
@@ -130,6 +140,7 @@ static userfw_match_descr base_matches[] = {
 	,{M_AND,	2,	{T_MATCH, T_MATCH}, "and",	match_logic}
 	,{M_NOT,	1,	{T_MATCH},	"not",	match_invert}
 	,{M_ANY,	0,	{},	"any",	match_any}
+	,{M_FRAME_LEN,	1,	{T_UINT32},	"frame-len",	match_frame_len}
 };
 
 static struct userfw_io_block *
