@@ -30,7 +30,6 @@
 #include "userfw_cmd.h"
 #include "userfw.h"
 #include <userfw/module.h>
-#include "userfw_util.h"
 #include <sys/priv.h>
 
 int parse_arg(unsigned char *, userfw_arg *);

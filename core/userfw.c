@@ -29,8 +29,8 @@
 #include "userfw_pfil.h"
 #include "userfw_module.h"
 #include "userfw_domain.h"
-#include "userfw_util.h"
 #include <userfw/ruleset.h>
+#include <userfw/module.h>
 
 #include <netinet/in.h>
 #include <netinet/ip.h>

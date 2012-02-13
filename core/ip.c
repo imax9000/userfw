@@ -41,7 +41,6 @@
 #include "userfw_module.h"
 #include <userfw/io.h>
 #include <userfw/ruleset.h>
-#include "userfw_util.h"
 
 static int
 match_port(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_cache *cache, userfw_arg *marg)

@@ -204,6 +204,11 @@ const userfw_cmd_descr *userfw_mod_find_cmd(userfw_module_id_t, opcode_t);
 int userfw_mod_inc_refcount(userfw_module_id_t);
 int userfw_mod_dec_refcount(userfw_module_id_t);
 
+struct malloc_type;
+void free_match_args(userfw_match *, struct malloc_type *);
+void free_action_args(userfw_action *, struct malloc_type *);
+void free_arg(userfw_arg *, struct malloc_type *);
+
 #ifndef SKIP_OPCODE_VERIFICATION
 #define VERIFY_OPCODE(obj, module, opcode, retval) do { \
 		if ((obj)->mod != (module) || (obj)->op != (opcode)) \

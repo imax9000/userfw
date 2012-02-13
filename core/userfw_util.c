@@ -27,9 +27,9 @@
 #include <sys/types.h>
 #include <sys/malloc.h>
 
-#include "userfw_util.h"
 #include "userfw.h"
 #include <userfw/ruleset.h>
+#include <userfw/module.h>
 
 void
 free_match_args(userfw_match *match, struct malloc_type *mtype)

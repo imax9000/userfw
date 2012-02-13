@@ -35,7 +35,6 @@
 #include "userfw_module.h"
 #include <userfw/io.h>
 #include <userfw/ruleset.h>
-#include "userfw_util.h"
 
 static int
 action_allow(struct mbuf **mb, userfw_chk_args *args, userfw_action *a, userfw_cache *cache, int *continue_, uint32_t flags)

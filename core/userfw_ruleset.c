@@ -25,7 +25,7 @@
  */
 
 #include <userfw/ruleset.h>
-#include "userfw_util.h"
+#include <userfw/module.h>
 #include <sys/types.h>
 #include <sys/malloc.h>
 
