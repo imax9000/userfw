@@ -93,6 +93,7 @@ action_dummynet_match(struct mbuf **mb, userfw_chk_args *args, userfw_action *ac
 	uint16_t num;
 	userfw_arg matcharg;
 
+	matcharg.type = T_INVAL;
 	*continue_ = 1;
 	VERIFY_OPCODE2(action, USERFW_DUMMYNET_MOD, A_MPIPE, A_MQUEUE, 0);
 
@@ -115,6 +116,7 @@ action_dummynet_match(struct mbuf **mb, userfw_chk_args *args, userfw_action *ac
 			}
 		}
 	}
+	free_arg(&matcharg, M_USERFW);
 	return ret;
 }
 
