@@ -503,39 +503,65 @@ print_rule(const struct userfw_io_block *msg, const struct userfw_modlist *modli
 static void
 print_block(const struct userfw_io_block *msg, const struct userfw_modlist *modlist)
 {
-	switch(msg->subtype)
+	switch(msg->type)
 	{
-	case ST_COOKIE:
-		return;
-	case ST_ERRNO:
-		if (msg->type == T_UINT32)
+	case T_UINT32:
+		switch(msg->subtype)
 		{
+		case ST_COOKIE:
+			return;
+		case ST_ERRNO:
 			switch(msg->data.uint32.value)
 			{
 			case 0:
-				printf("OK");
+				printf("OK\n");
 				break;
 			default:
-				printf("Error: %d %s", msg->data.uint32.value,
+				printf("Error: %d %s\n", msg->data.uint32.value,
 					strerror(msg->data.uint32.value));
 			}
+			break;
+		default:
+			print_simple_block(msg);
+			break;
 		}
-		else
+		break;
+	case T_STRING:
+	case T_UINT16:
+	case T_IPv4:
+	case T_IPv6:
+	case T_UINT64:
+		print_simple_block(msg);
+		printf("\t");
+		break;
+	case T_ACTION:
+		print_action(msg, modlist);
+		printf("\t");
+		break;
+	case T_MATCH:
+		print_match(msg, modlist);
+		printf("\t");
+		break;
+	case T_CONTAINER:
+		switch(msg->subtype)
 		{
-			printf("Error: wrong type for ST_ERRNO");
+		case ST_MOD_DESCR:
+			print_mod_descr(msg);
+			break;
+		case ST_RULESET:
+			print_ruleset(msg, modlist);
+			break;
+		case ST_RULE:
+			print_rule(msg, modlist);
+			printf("\n");
+			break;
+		default:
+			print_msg(msg, modlist);
+			printf("\n");
+			break;
 		}
-		break;
-	case ST_MOD_DESCR:
-		print_mod_descr(msg);
-		break;
-	case ST_RULESET:
-		print_ruleset(msg, modlist);
-		break;
-	case ST_RULE:
-		print_rule(msg, modlist);
 		break;
 	}
-	printf("\n");
 }
 
 void
