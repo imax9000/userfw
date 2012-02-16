@@ -146,10 +146,10 @@ print_simple_block(const struct userfw_io_block *msg)
 		}
 		break;
 	case T_UINT16:
-		printf("%d", msg->data.uint16.value);
+		printf("%hu", msg->data.uint16.value);
 		break;
 	case T_UINT32:
-		printf("%d", msg->data.uint32.value);
+		printf("%lu", msg->data.uint32.value);
 		break;
 	case T_IPv4:
 		buf = malloc(INET_ADDRSTRLEN + 1);
