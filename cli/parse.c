@@ -250,6 +250,61 @@ parse_string(int argc, char *argv[], struct userfw_modlist *modlist, int *consum
 }
 
 static struct userfw_io_block *
+parse_hexstring(int argc, char *argv[], struct userfw_modlist *modlist, int *consumed)
+{
+	struct userfw_io_block *ret = NULL;
+
+	if (argc < 1)
+		return NULL;
+
+	ret = userfw_msg_alloc_block(T_HEXSTRING, ST_ARG);
+
+	if (ret != NULL)
+	{
+		ret->data.type = T_HEXSTRING;
+		size_t len = strlen(argv[0]), i;
+		char buf[3] = {0};
+		if (len % 2 == 0)
+		{
+			len /= 2;
+			ret->data.string.data = malloc(len);
+			if (ret->data.string.data != NULL)
+			{
+				for(i = 0; i < len; i++)
+				{
+					buf[0] = argv[0][i*2];
+					buf[1] = argv[0][i*2+1];
+					if ((ret->data.string.data[i] = strtol(buf, NULL, 16)) == 0 && errno != 0)
+					{
+						fprintf(stderr, "Failed to convert \"%s\" to number: %s", buf, strerror(errno));
+						userfw_msg_free(ret);
+						ret = NULL;
+						break;
+					}
+				}
+			}
+			else
+			{
+				fprintf(stderr, "Failed to allocate %zu bytes for T_HEXSTRING\n");
+				userfw_msg_free(ret);
+				ret = NULL;
+			}
+		}
+		else
+		{
+			fprintf(stderr, "Incorrect hexstring length\n");
+			userfw_msg_free(ret);
+			ret = NULL;
+		}
+		*consumed = 1;
+	}
+	else
+	{
+		fprintf(stderr, "Failed to allocate memory for T_HEXSTRING\n");
+	}
+}
+
+static struct userfw_io_block *
 parse_ipv4(int argc, char *argv[], struct userfw_modlist *modlist, int *consumed)
 {
 	struct userfw_io_block *ret = NULL;
@@ -468,6 +523,8 @@ parse_arg(int argc, char *argv[], int type, struct userfw_modlist *modlist, int 
 	{
 	case T_STRING:
 		return parse_string(argc, argv, modlist, consumed);
+	case T_HEXSTRING:
+		return parse_hexstring(argc, argv, modlist, consumed);
 	case T_UINT16:
 		return parse_uint16(argc, argv, modlist, consumed);
 	case T_UINT32:

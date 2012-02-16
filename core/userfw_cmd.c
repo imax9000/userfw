@@ -159,6 +159,7 @@ parse_arg(unsigned char *buf, userfw_arg *dst)
 	switch (arg->type)
 	{
 	case T_STRING:
+	case T_HEXSTRING:
 		dst->string.length = arg->length - sizeof(*arg);
 		dst->string.data = malloc(arg->length - sizeof(*arg), M_USERFW, M_WAITOK);
 		bcopy(buf + sizeof(*arg), dst->string.data, arg->length - sizeof(*arg));

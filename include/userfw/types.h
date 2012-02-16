@@ -50,6 +50,7 @@ typedef enum __userfw_type
 	,T_MATCH
 	,T_ACTION
 	,T_UINT64
+	,T_HEXSTRING	/* Just like T_STRING, only presentation differs */
 } userfw_type;
 
 #define T_PORT	T_UINT16

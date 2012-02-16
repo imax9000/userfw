@@ -94,7 +94,7 @@ userfw_msg_free(struct userfw_io_block *p, struct malloc_type *mtype)
 		}
 		free(p->args, mtype);
 	}
-	if (p->type == T_STRING && p->data.string.data != NULL)
+	if ((p->type == T_STRING || p->type == T_HEXSTRING) && p->data.string.data != NULL)
 	{
 		free(p->data.string.data, mtype);
 	}
@@ -149,7 +149,7 @@ userfw_msg_calc_size(struct userfw_io_block *p)
 				ret += userfw_msg_calc_size(p->args[i]);
 		}
 	}
-	else if (p->type == T_STRING)
+	else if (p->type == T_STRING || p->type == T_HEXSTRING)
 	{
 		ret += p->data.string.length;
 	}
@@ -190,6 +190,7 @@ userfw_msg_serialize(struct userfw_io_block *p, unsigned char *buf, size_t len)
 		switch(p->type)
 		{
 		case T_STRING:
+		case T_HEXSTRING:
 			bcopy(p->data.string.data, data, p->data.string.length);
 			break;
 		case T_UINT16:
@@ -242,6 +243,16 @@ int
 userfw_msg_insert_string(struct userfw_io_block *msg, uint32_t subtype, const char *str, size_t len, uint32_t pos, struct malloc_type *mtype)
 {
 	userfw_msg_set_arg(msg, userfw_msg_alloc_block(T_STRING, subtype, mtype), pos);
+	msg->args[pos]->data.string.length = len;
+	msg->args[pos]->data.string.data = malloc(len, mtype, M_WAITOK);
+	bcopy(str, msg->args[pos]->data.string.data, len);
+	return 0;
+}
+
+int
+userfw_msg_insert_hexstring(struct userfw_io_block *msg, uint32_t subtype, const char *str, size_t len, uint32_t pos, struct malloc_type *mtype)
+{
+	userfw_msg_set_arg(msg, userfw_msg_alloc_block(T_HEXSTRING, subtype, mtype), pos);
 	msg->args[pos]->data.string.length = len;
 	msg->args[pos]->data.string.data = malloc(len, mtype, M_WAITOK);
 	bcopy(str, msg->args[pos]->data.string.data, len);
@@ -303,6 +314,9 @@ userfw_msg_insert_arg(struct userfw_io_block *msg, uint32_t subtype, const userf
 	{
 	case T_STRING:
 		userfw_msg_insert_string(msg, subtype, arg->string.data, arg->string.length, pos, mtype);
+		break;
+	case T_HEXSTRING:
+		userfw_msg_insert_hexstring(msg, subtype, arg->string.data, arg->string.length, pos, mtype);
 		break;
 	case T_UINT16:
 		userfw_msg_insert_uint16(msg, subtype, arg->uint16.value, pos, mtype);

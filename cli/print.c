@@ -48,7 +48,8 @@ const char *type_names[] = {
 "T_IPv6",
 "T_MATCH",
 "T_ACTION",
-"T_UINT64"
+"T_UINT64",
+"T_HEXSTRING"
 };
 
 char type_buf[256] = {0};
@@ -62,6 +63,7 @@ type_name(uint32_t type)
 		return "T_CONTAINER";
 	case T_INVAL:
 	case T_STRING:
+	case T_HEXSTRING:
 	case T_UINT16:
 	case T_UINT32:
 	case T_UINT64:
@@ -145,6 +147,13 @@ print_simple_block(const struct userfw_io_block *msg)
 		else
 		{
 			fprintf(stderr, "Failed to allocate memory for string\n");
+		}
+		break;
+	case T_HEXSTRING:
+		{
+			uint32_t i;
+			for(i = 0; i < msg->data.string.length; i++)
+				printf("%02X", (uint8_t)(msg->data.string.data[i]));
 		}
 		break;
 	case T_UINT16:
@@ -239,6 +248,7 @@ print_msg_full_recursive(const struct userfw_io_block *msg, const struct userfw_
 	switch(msg->type)
 	{
 	case T_STRING:
+	case T_HEXSTRING:
 	case T_UINT16:
 	case T_UINT32:
 	case T_UINT64:
@@ -444,6 +454,7 @@ print_ ## x(const struct userfw_io_block *msg, const struct userfw_modlist *modl
 			switch(msg->args[i]->type) \
 			{ \
 			case T_STRING: \
+			case T_HEXSTRING: \
 			case T_UINT16: \
 			case T_UINT32: \
 			case T_UINT64: \
@@ -529,6 +540,7 @@ print_block(const struct userfw_io_block *msg, const struct userfw_modlist *modl
 		}
 		break;
 	case T_STRING:
+	case T_HEXSTRING:
 	case T_UINT16:
 	case T_IPv4:
 	case T_IPv6:
