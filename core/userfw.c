@@ -102,6 +102,9 @@ int userfw_uninit()
 	if (!err)
 		err = userfw_pfil_unregister();
 
+	USERFW_WLOCK(&global_rules);
+	USERFW_WUNLOCK(&global_rules);
+
 	if (!err)
 	{
 		userfw_cache_uninit();
