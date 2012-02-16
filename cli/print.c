@@ -441,6 +441,7 @@ print_ ## x(const struct userfw_io_block *msg, const struct userfw_modlist *modl
 			case T_UINT16: \
 			case T_UINT32: \
 			case T_IPv4: \
+			case T_IPv6: \
 				print_simple_block(msg->args[i]); \
 				printf(" "); \
 				break; \
