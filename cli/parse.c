@@ -181,6 +181,37 @@ parse_uint16(int argc, char *argv[], struct userfw_modlist *modlist, int *consum
 	return ret;
 }
 
+static struct userfw_io_block *
+parse_uint64(int argc, char *argv[], struct userfw_modlist *modlist, int *consumed)
+{
+	struct userfw_io_block *ret = NULL;
+
+	if (argc < 1)
+		return NULL;
+
+	ret = userfw_msg_alloc_block(T_UINT64, ST_ARG);
+
+	if (ret != NULL)
+	{
+		ret->data.type = T_UINT64;
+		ret->data.uint64.value = strtoull(argv[0], NULL, 0);
+		if (errno != 0)
+		{
+			perror("strtoull");
+			fprintf(stderr, "Failed to parse %s as T_UINT64\n", argv[0]);
+			userfw_msg_free(ret);
+			ret = NULL;
+		}
+		*consumed = 1;
+	}
+	else
+	{
+		fprintf(stderr, "Failed to allocate memory for T_UINT64\n");
+	}
+
+	return ret;
+}
+
 
 static struct userfw_io_block *
 parse_string(int argc, char *argv[], struct userfw_modlist *modlist, int *consumed)
@@ -441,6 +472,8 @@ parse_arg(int argc, char *argv[], int type, struct userfw_modlist *modlist, int 
 		return parse_uint16(argc, argv, modlist, consumed);
 	case T_UINT32:
 		return parse_uint32(argc, argv, modlist, consumed);
+	case T_UINT64:
+		return parse_uint64(argc, argv, modlist, consumed);
 	case T_IPv4:
 		return parse_ipv4(argc, argv, modlist, consumed);
 	case T_IPv6:

@@ -49,6 +49,7 @@ typedef enum __userfw_type
 	,T_IPv6
 	,T_MATCH
 	,T_ACTION
+	,T_UINT64
 } userfw_type;
 
 #define T_PORT	T_UINT16

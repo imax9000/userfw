@@ -151,6 +151,9 @@ print_simple_block(const struct userfw_io_block *msg)
 	case T_UINT32:
 		printf("%lu", msg->data.uint32.value);
 		break;
+	case T_UINT64:
+		printf("%llu", msg->data.uint64.value);
+		break;
 	case T_IPv4:
 		buf = malloc(INET_ADDRSTRLEN + 1);
 		if (buf != NULL)
@@ -236,6 +239,7 @@ print_msg_full_recursive(const struct userfw_io_block *msg, const struct userfw_
 	case T_STRING:
 	case T_UINT16:
 	case T_UINT32:
+	case T_UINT64:
 	case T_IPv4:
 	case T_IPv6:
 		print_indent(indent);
@@ -440,6 +444,7 @@ print_ ## x(const struct userfw_io_block *msg, const struct userfw_modlist *modl
 			case T_STRING: \
 			case T_UINT16: \
 			case T_UINT32: \
+			case T_UINT64: \
 			case T_IPv4: \
 			case T_IPv6: \
 				print_simple_block(msg->args[i]); \

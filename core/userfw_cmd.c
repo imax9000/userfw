@@ -169,6 +169,9 @@ parse_arg(unsigned char *buf, userfw_arg *dst)
 	case T_UINT32:
 		bcopy(data, &(dst->uint32.value), sizeof(uint32_t));
 		break;
+	case T_UINT64:
+		bcopy(data, &(dst->uint64.value), sizeof(uint64_t));
+		break;
 	case T_IPv4:
 		bcopy(data, &(dst->ipv4.addr), sizeof(uint32_t));
 		bcopy(data + sizeof(uint32_t), &(dst->ipv4.mask), sizeof(uint32_t));

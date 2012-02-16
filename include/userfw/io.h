@@ -125,6 +125,7 @@ int	userfw_msg_serialize(struct userfw_io_block *, unsigned char *, size_t);
 
 int userfw_msg_insert_uint16(struct userfw_io_block *parent, uint32_t subtype, uint16_t value, uint32_t pos, struct malloc_type *);
 int userfw_msg_insert_uint32(struct userfw_io_block *parent, uint32_t subtype, uint32_t value, uint32_t pos, struct malloc_type *);
+int userfw_msg_insert_uint64(struct userfw_io_block *parent, uint32_t subtype, uint64_t value, uint32_t pos, struct malloc_type *);
 int userfw_msg_insert_string(struct userfw_io_block *parent, uint32_t subtype, const char *str, size_t len, uint32_t pos, struct malloc_type *);
 int userfw_msg_insert_ipv4(struct userfw_io_block *parent, uint32_t subtype, uint32_t addr, uint32_t mask, uint32_t pos, struct malloc_type *);
 int userfw_msg_insert_ipv6(struct userfw_io_block *parent, uint32_t subtype, const uint32_t addr[4], const uint32_t mask[4], uint32_t pos, struct malloc_type *);

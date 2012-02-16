@@ -88,6 +88,11 @@ typedef union __userfw_arg
 	} uint32;
 	struct
 	{
+		uint8_t	type;
+		uint64_t	value;
+	} uint64;
+	struct
+	{
 		uint8_t type;
 		uint32_t    addr;
 		uint32_t    mask;

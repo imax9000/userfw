@@ -122,6 +122,9 @@ type_size(uint32_t type)
 	case T_UINT32:
 		ret = sizeof(uint32_t);
 		break;
+	case T_UINT64:
+		ret = sizeof(uint64_t);
+		break;
 	case T_IPv4:
 		ret = sizeof(uint32_t)*2;
 		break;
@@ -195,6 +198,9 @@ userfw_msg_serialize(struct userfw_io_block *p, unsigned char *buf, size_t len)
 		case T_UINT32:
 			*((uint32_t*)data) = p->data.uint32.value;
 			break;
+		case T_UINT64:
+			*((uint64_t*)data) = p->data.uint64.value;
+			break;
 		case T_IPv4:
 			*((uint32_t*)data) = p->data.ipv4.addr;
 			*((uint32_t*)(data + sizeof(uint32_t))) = p->data.ipv4.mask;
@@ -221,6 +227,14 @@ userfw_msg_insert_uint32(struct userfw_io_block *msg, uint32_t subtype, uint32_t
 {
 	userfw_msg_set_arg(msg, userfw_msg_alloc_block(T_UINT32, subtype, mtype), pos);
 	msg->args[pos]->data.uint32.value = value;
+	return 0;
+}
+
+int
+userfw_msg_insert_uint64(struct userfw_io_block *msg, uint32_t subtype, uint64_t value, uint32_t pos, struct malloc_type *mtype)
+{
+	userfw_msg_set_arg(msg, userfw_msg_alloc_block(T_UINT64, subtype, mtype), pos);
+	msg->args[pos]->data.uint64.value = value;
 	return 0;
 }
 
@@ -295,6 +309,9 @@ userfw_msg_insert_arg(struct userfw_io_block *msg, uint32_t subtype, const userf
 		break;
 	case T_UINT32:
 		userfw_msg_insert_uint32(msg, subtype, arg->uint32.value, pos, mtype);
+		break;
+	case T_UINT64:
+		userfw_msg_insert_uint64(msg, subtype, arg->uint64.value, pos, mtype);
 		break;
 	case T_IPv4:
 		userfw_msg_insert_ipv4(msg, subtype, arg->ipv4.addr, arg->ipv4.mask, pos, mtype);
