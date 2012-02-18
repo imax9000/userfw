@@ -268,6 +268,7 @@ parse_hexstring(int argc, char *argv[], struct userfw_modlist *modlist, int *con
 		{
 			len /= 2;
 			ret->data.string.data = malloc(len);
+			ret->data.string.length = len;
 			if (ret->data.string.data != NULL)
 			{
 				for(i = 0; i < len; i++)
@@ -285,7 +286,7 @@ parse_hexstring(int argc, char *argv[], struct userfw_modlist *modlist, int *con
 			}
 			else
 			{
-				fprintf(stderr, "Failed to allocate %zu bytes for T_HEXSTRING\n");
+				fprintf(stderr, "Failed to allocate %zu bytes for T_HEXSTRING\n", len);
 				userfw_msg_free(ret);
 				ret = NULL;
 			}
@@ -302,6 +303,8 @@ parse_hexstring(int argc, char *argv[], struct userfw_modlist *modlist, int *con
 	{
 		fprintf(stderr, "Failed to allocate memory for T_HEXSTRING\n");
 	}
+
+ 	return ret;
 }
 
 static struct userfw_io_block *
