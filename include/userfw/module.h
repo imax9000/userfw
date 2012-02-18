@@ -119,9 +119,9 @@ typedef union __userfw_arg
 typedef int (*userfw_match_fn)(struct mbuf **, userfw_chk_args *, userfw_match *, userfw_cache *, userfw_arg *);
 typedef int (*userfw_action_fn)(struct mbuf **, userfw_chk_args *, userfw_action *, userfw_cache *, int *, uint32_t);
 typedef int (*userfw_match_ctor)(userfw_match *);
-typedef int (*userfw_match_dtor)(userfw_match *);
+typedef void (*userfw_match_dtor)(userfw_match *);
 typedef int (*userfw_action_ctor)(userfw_action *);
-typedef int (*userfw_action_dtor)(userfw_action *);
+typedef void (*userfw_action_dtor)(userfw_action *);
 typedef int (*userfw_cmd_handler)(opcode_t, uint32_t, userfw_arg *, struct socket *, struct thread *);
 typedef int (*userfw_cmd_access_check)(userfw_module_id_t, const userfw_cmd_descr *, const userfw_arg *, struct socket *, struct thread *);
 
