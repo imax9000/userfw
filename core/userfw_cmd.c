@@ -101,6 +101,10 @@ userfw_cmd_dispatch(unsigned char *buf,
 		err = (*access_checker)(dst, cmdinfo, parsed_args, so, td) ? 0 : EPERM;
 
 	cookie_val = cookie != NULL ? (*((uint32_t*)((char*)cookie + sizeof(*cookie)))) : 0;
+
+	if (err != 0)
+		userfw_msg_reply_error(so, cookie_val, err);
+
 	if (err == 0)
 		err = cmdinfo->do_cmd(*((uint32_t*)((char*)opcode + sizeof(*opcode))),
 				cookie_val, parsed_args, so, td);
