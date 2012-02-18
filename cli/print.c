@@ -29,6 +29,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <sys/param.h>
 #include "print.h"
 
@@ -160,7 +161,7 @@ print_simple_block(const struct userfw_io_block *msg)
 		printf("%hu", msg->data.uint16.value);
 		break;
 	case T_UINT32:
-		printf("%lu", msg->data.uint32.value);
+		printf("%u", msg->data.uint32.value);
 		break;
 	case T_UINT64:
 		printf("%llu", msg->data.uint64.value);
@@ -561,6 +562,7 @@ print_block(const struct userfw_io_block *msg, const struct userfw_modlist *modl
 		{
 		case ST_MOD_DESCR:
 			print_mod_descr(msg);
+			printf("\n");
 			break;
 		case ST_RULESET:
 			print_ruleset(msg, modlist);

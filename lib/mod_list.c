@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <strings.h>
+#include <string.h>
 #include <stdio.h>
 #include <sys/param.h>
 #include "mod_list.h"
@@ -192,10 +193,8 @@ struct userfw_modlist *
 userfw_modlist_get(struct userfw_connection *c)
 {
 	struct userfw_modlist *ret = NULL;
-	unsigned char *buf = NULL;
-	size_t len;
 	struct userfw_io_block *msg = NULL, *cur;
-	int i, j, k, count;
+	int i, j, count;
 
 	if (userfw_send_modlist_cmd(c) >= 0 &&
 		(msg = userfw_recv_msg(c)) != NULL)
@@ -256,7 +255,7 @@ userfw_modlist_get(struct userfw_connection *c)
 void
 userfw_modlist_destroy(struct userfw_modlist *m)
 {
-	int i, j, k;
+	int i;
 	if (m == NULL)
 		return;
 

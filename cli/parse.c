@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include "parse.h"
 
 #define SEARCH_FUNCTION(x) static struct userfw_ ## x ## _descr * find_ ## x(const char *name, const struct userfw_modlist *modlist) \
