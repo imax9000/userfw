@@ -1,3 +1,5 @@
+include(userfw_module)
+
 add_subdirectory(bpf)
 add_subdirectory(counters)
 add_subdirectory(dummy EXCLUDE_FROM_ALL)
