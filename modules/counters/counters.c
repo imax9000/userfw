@@ -254,7 +254,7 @@ cmd_reset_all(opcode_t op, uint32_t cookie, userfw_arg *args, struct socket *so,
 
 static userfw_cmd_descr counters_cmds[] = 
 {
-	{CMD_LIST,	0,	{},	"list",	cmd_list}
+	{CMD_LIST,	0,	{},	"show",	cmd_list}
 	,{CMD_GET,	1,	{T_UINT16},	"get",	cmd_get}
 	,{CMD_RESET,	1,	{T_UINT16},	"reset",	cmd_reset}
 	,{CMD_RESET_ALL,	0,	{},	"reset-all",	cmd_reset_all}
