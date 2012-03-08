@@ -43,7 +43,7 @@ struct counter
 	uint64_t	bytes;
 };
 
-#define	NCOUNTERS	(0xffff)
+#define	NCOUNTERS	(0x10000)
 
 struct counter counters[NCOUNTERS];
 struct mtx mutexes[NCOUNTERS];
