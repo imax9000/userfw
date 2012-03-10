@@ -280,7 +280,7 @@ print_msg_full(const struct userfw_io_block *msg, const struct userfw_modlist* m
 static void
 print_op_descr(const struct userfw_io_block *msg)
 {
-	opcode_t opcode;
+	opcode_t opcode = -1;
 	char name[USERFW_NAME_LEN + 1] = {0};
 	int i;
 
@@ -481,7 +481,7 @@ PRINT_FUNCTION(match);
 static void
 print_rule(const struct userfw_io_block *msg, const struct userfw_modlist *modlist)
 {
-	uint32_t number;
+	uint32_t number = -1;
 	struct userfw_io_block *action = NULL, *match = NULL;
 	int i;
 
