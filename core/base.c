@@ -36,6 +36,22 @@
 #include <userfw/io.h>
 #include <userfw/ruleset.h>
 
+#if (__FreeBSD_version < 802513) /* inaccurate and build can fail on releng/8 between r226029 and r226763 */
+size_t strnlen(const char *, size_t);
+
+size_t
+strnlen(const char *s, size_t maxlen)
+{
+	size_t len;
+
+	for (len = 0; len < maxlen; len++, s++) {
+		if (!*s)
+			break;
+	}
+	return (len);
+}	
+#endif
+
 static int
 action_allow(struct mbuf **mb, userfw_chk_args *args, userfw_action *a, userfw_cache *cache, int *continue_, uint32_t flags)
 {
