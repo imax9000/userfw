@@ -188,7 +188,7 @@ userfw_recv_msg(struct userfw_connection *c)
 	if (ret > 0)
 	{
 		if (hdr.length >= MSG_SIZE_WARN)
-			fprintf(stderr, "userfw_recv_msg: Warning: incoming message size == %zu\n", hdr.length);
+			fprintf(stderr, "userfw_recv_msg: Warning: incoming message size == %u\n", hdr.length);
 		buf = malloc(hdr.length);
 		if (buf != NULL)
 		{
