@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <inttypes.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/param.h>
@@ -158,13 +159,13 @@ print_simple_block(const struct userfw_io_block *msg)
 		}
 		break;
 	case T_UINT16:
-		printf("%hu", msg->data.uint16.value);
+		printf("%" PRIu16, msg->data.uint16.value);
 		break;
 	case T_UINT32:
-		printf("%u", msg->data.uint32.value);
+		printf("%" PRIu32, msg->data.uint32.value);
 		break;
 	case T_UINT64:
-		printf("%llu", msg->data.uint64.value);
+		printf("%" PRIu64, msg->data.uint64.value);
 		break;
 	case T_IPv4:
 		buf = malloc(INET_ADDRSTRLEN + 1);

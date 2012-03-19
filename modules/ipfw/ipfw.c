@@ -60,11 +60,11 @@ match_ipfw_table(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, u
 	VERIFY_OPCODE2(match, USERFW_IPFW_MOD, M_LOOKUP_SRC, M_LOOKUP_DST, 0);
 
 	if (cache != NULL && 
-			(lookup_from_cache = (uint32_t)(int)userfw_cache_read(cache, USERFW_IPFW_MOD,
+			(lookup_from_cache = (uint32_t)(long)userfw_cache_read(cache, USERFW_IPFW_MOD,
 						IPFW_TABLES_MAX*4 + cache_id)) != 0)
 	{
-		ret = (uint32_t)(int)userfw_cache_read(cache, USERFW_IPFW_MOD, cache_id);
-		tablearg = (uint32_t)(int)userfw_cache_read(cache, USERFW_IPFW_MOD,
+		ret = (uint32_t)(long)userfw_cache_read(cache, USERFW_IPFW_MOD, cache_id);
+		tablearg = (uint32_t)(long)userfw_cache_read(cache, USERFW_IPFW_MOD,
 				IPFW_TABLES_MAX*2 + cache_id);
 	}
 	else
@@ -85,9 +85,9 @@ match_ipfw_table(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, u
 
 		if (cache != NULL)
 		{
-			userfw_cache_write(cache, USERFW_IPFW_MOD, cache_id, (void*)(int)ret, NULL);
+			userfw_cache_write(cache, USERFW_IPFW_MOD, cache_id, (void*)(long)ret, NULL);
 			userfw_cache_write(cache, USERFW_IPFW_MOD, IPFW_TABLES_MAX*2 + cache_id,
-					(void*)(int)tablearg, NULL);
+					(void*)(long)tablearg, NULL);
 			userfw_cache_write(cache, USERFW_IPFW_MOD, IPFW_TABLES_MAX*4 + cache_id,
 					(void*)1, NULL);
 		}

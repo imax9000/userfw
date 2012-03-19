@@ -177,7 +177,7 @@ match_ip_proto(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, use
 	}
 
 	if ((match->op == M_IP_PROTO && val == match->args[0].uint16.value) ||
-		(match->op == M_IP_PROTO_NAME && val == (int)(match->priv)))
+		(match->op == M_IP_PROTO_NAME && val == (long)(match->priv)))
 		return 1;
 	else
 		return 0;
@@ -209,7 +209,7 @@ match_ip_proto_ctor(userfw_match *match)
 	{
 		if (memcmp(proto_names[i], match->args[0].string.data, match->args[0].string.length) == 0)
 		{
-			match->priv = (void*)(int)(proto_numbers[i]);
+			match->priv = (void*)(long)(proto_numbers[i]);
 			return 0;
 		}
 	}

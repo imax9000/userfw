@@ -54,7 +54,7 @@ userfw_pfil_hook(void *arg, struct mbuf **mb, struct ifnet *ifp, int dir, struct
 {
 	userfw_chk_args args;
 	
-	args.af = (int)arg;
+	args.af = (long)arg;
 	args.ifp = ifp;
 	args.dir = (dir == PFIL_IN) ? USERFW_IN : USERFW_OUT; /* looks ugly */
 	args.inpcb = pcb;
