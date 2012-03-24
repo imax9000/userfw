@@ -221,9 +221,9 @@ cmd_get(opcode_t op, uint32_t cookie, userfw_arg *args, struct socket *so, struc
 	userfw_msg_insert_uint32(msg, ST_COOKIE, cookie, 0, M_USERFW);
 	userfw_msg_set_arg(msg, userfw_msg_alloc_container(T_CONTAINER, ST_UNSPEC, 3, M_USERFW), 1);
 
-	userfw_msg_insert_uint16(msg->args[2], ST_UNSPEC, args[0].uint16.value, 0, M_USERFW);
-	userfw_msg_insert_uint64(msg->args[2], ST_UNSPEC, data.packets, 1, M_USERFW);
-	userfw_msg_insert_uint64(msg->args[2], ST_UNSPEC, data.bytes, 2, M_USERFW);
+	userfw_msg_insert_uint16(msg->args[1], ST_UNSPEC, args[0].uint16.value, 0, M_USERFW);
+	userfw_msg_insert_uint64(msg->args[1], ST_UNSPEC, data.packets, 1, M_USERFW);
+	userfw_msg_insert_uint64(msg->args[1], ST_UNSPEC, data.bytes, 2, M_USERFW);
 	len = userfw_msg_calc_size(msg);
 	buf = malloc(len, M_USERFW, M_WAITOK);
 	if (userfw_msg_serialize(msg, buf, len) > 0)
