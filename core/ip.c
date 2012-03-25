@@ -124,7 +124,7 @@ match_port(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, userfw_
 		return 0;
 	}
 
-	if (val == match->args[0].uint16.value)
+	if (ntohs(val) == match->args[0].uint16.value)
 		return 1;
 	else
 		return 0;
