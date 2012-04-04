@@ -82,7 +82,10 @@ userfw_msg_alloc_container(uint32_t type, uint32_t subtype, uint32_t nargs)
 			ret = NULL;
 			errno = ENOMEM;
 		}
-		bzero(ret->args, sizeof(ret)*nargs);
+		else
+		{
+			bzero(ret->args, sizeof(ret)*nargs);
+		}
 	}
 
 	return ret;
@@ -153,6 +156,9 @@ userfw_msg_calc_size(struct userfw_io_block *p)
 	int ret = sizeof(struct userfw_io_header);
 	int i;
 
+	if (p == NULL)
+		return 0;
+
 	if (is_container(p))
 	{
 		for(i = 0; i < p->nargs; i++)
@@ -179,6 +185,8 @@ userfw_msg_serialize(struct userfw_io_block *p, unsigned char *buf, size_t len)
 
 	if (block_len > len)
 		return -ENOMEM;
+	if (p == NULL || buf == NULL)
+		return 0;
 
 	hdr->type = p->type;
 	hdr->subtype = p->subtype;
@@ -419,8 +427,9 @@ subblocks_count(unsigned char *buf, size_t len)
 
 	while(len >= sizeof(*hdr))
 	{
-		/* TODO: add some validation */
 		hdr = (struct userfw_io_header *)buf;
+		if (hdr->length > len)
+			return 0;
 		len -= hdr->length;
 		buf += hdr->length;
 		ret++;
@@ -434,8 +443,14 @@ struct userfw_io_block *
 userfw_msg_parse(unsigned char *buf, size_t len)
 {
 	struct userfw_io_block *ret = NULL;
-	struct userfw_io_header *hdr = (struct userfw_io_header*)buf;
-	unsigned char *data = buf + sizeof(*hdr);
+	struct userfw_io_header *hdr;
+	unsigned char *data;;
+
+	if (buf == NULL)
+		return NULL;
+
+	hdr = (struct userfw_io_header*)buf;
+	data = buf + sizeof(*hdr);
 
 	if (len < sizeof(*hdr) || len < hdr->length)
 		return NULL;
