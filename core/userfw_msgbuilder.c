@@ -141,6 +141,9 @@ userfw_msg_calc_size(struct userfw_io_block *p)
 	int ret = sizeof(struct userfw_io_header);
 	int i;
 
+	if (p == NULL)
+		return 0;
+
 	if (is_container(p))
 	{
 		for(i = 0; i < p->nargs; i++)
@@ -167,6 +170,8 @@ userfw_msg_serialize(struct userfw_io_block *p, unsigned char *buf, size_t len)
 
 	if (block_len > len)
 		return -ENOMEM;
+	if (p == NULL || buf == NULL)
+		return 0;
 
 	hdr->type = p->type;
 	hdr->subtype = p->subtype;
