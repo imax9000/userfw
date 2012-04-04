@@ -104,7 +104,7 @@ userfw_msg_free(struct userfw_io_block *p, struct malloc_type *mtype)
 int
 userfw_msg_set_arg(struct userfw_io_block *parent, struct userfw_io_block *child, uint32_t pos)
 {
-	if (!is_container(parent) || pos >= parent->nargs)
+	if (parent == NULL || !is_container(parent) || pos >= parent->nargs)
 		return EINVAL;
 	parent->args[pos] = child;
 	return 0;
@@ -223,6 +223,8 @@ userfw_msg_serialize(struct userfw_io_block *p, unsigned char *buf, size_t len)
 int
 userfw_msg_insert_uint16(struct userfw_io_block *msg, uint32_t subtype, uint16_t value, uint32_t pos, struct malloc_type *mtype)
 {
+	if (msg == NULL || mtype == NULL || pos >= msg->nargs)
+		return -1;
 	userfw_msg_set_arg(msg, userfw_msg_alloc_block(T_UINT16, subtype, mtype), pos);
 	msg->args[pos]->data.uint16.value = value;
 	return 0;
@@ -231,6 +233,8 @@ userfw_msg_insert_uint16(struct userfw_io_block *msg, uint32_t subtype, uint16_t
 int
 userfw_msg_insert_uint32(struct userfw_io_block *msg, uint32_t subtype, uint32_t value, uint32_t pos, struct malloc_type *mtype)
 {
+	if (msg == NULL || mtype == NULL || pos >= msg->nargs)
+		return -1;
 	userfw_msg_set_arg(msg, userfw_msg_alloc_block(T_UINT32, subtype, mtype), pos);
 	msg->args[pos]->data.uint32.value = value;
 	return 0;
@@ -239,6 +243,8 @@ userfw_msg_insert_uint32(struct userfw_io_block *msg, uint32_t subtype, uint32_t
 int
 userfw_msg_insert_uint64(struct userfw_io_block *msg, uint32_t subtype, uint64_t value, uint32_t pos, struct malloc_type *mtype)
 {
+	if (msg == NULL || mtype == NULL || pos >= msg->nargs)
+		return -1;
 	userfw_msg_set_arg(msg, userfw_msg_alloc_block(T_UINT64, subtype, mtype), pos);
 	msg->args[pos]->data.uint64.value = value;
 	return 0;
@@ -247,6 +253,8 @@ userfw_msg_insert_uint64(struct userfw_io_block *msg, uint32_t subtype, uint64_t
 int
 userfw_msg_insert_string(struct userfw_io_block *msg, uint32_t subtype, const char *str, size_t len, uint32_t pos, struct malloc_type *mtype)
 {
+	if (msg == NULL || str == NULL || mtype == NULL || pos >= msg->nargs)
+		return -1;
 	userfw_msg_set_arg(msg, userfw_msg_alloc_block(T_STRING, subtype, mtype), pos);
 	msg->args[pos]->data.string.length = len;
 	msg->args[pos]->data.string.data = malloc(len, mtype, M_WAITOK);
@@ -257,6 +265,8 @@ userfw_msg_insert_string(struct userfw_io_block *msg, uint32_t subtype, const ch
 int
 userfw_msg_insert_hexstring(struct userfw_io_block *msg, uint32_t subtype, const char *str, size_t len, uint32_t pos, struct malloc_type *mtype)
 {
+	if (msg == NULL || str == NULL || mtype == NULL || pos >= msg->nargs)
+		return -1;
 	userfw_msg_set_arg(msg, userfw_msg_alloc_block(T_HEXSTRING, subtype, mtype), pos);
 	msg->args[pos]->data.string.length = len;
 	msg->args[pos]->data.string.data = malloc(len, mtype, M_WAITOK);
@@ -267,6 +277,8 @@ userfw_msg_insert_hexstring(struct userfw_io_block *msg, uint32_t subtype, const
 int
 userfw_msg_insert_ipv4(struct userfw_io_block *msg, uint32_t subtype, uint32_t addr, uint32_t mask, uint32_t pos, struct malloc_type *mtype)
 {
+	if (msg == NULL || mtype == NULL || pos >= msg->nargs)
+		return -1;
 	userfw_msg_set_arg(msg, userfw_msg_alloc_block(T_IPv4, subtype, mtype), pos);
 	msg->args[pos]->data.ipv4.addr = addr;
 	msg->args[pos]->data.ipv4.mask = mask;
@@ -276,6 +288,8 @@ userfw_msg_insert_ipv4(struct userfw_io_block *msg, uint32_t subtype, uint32_t a
 int
 userfw_msg_insert_ipv6(struct userfw_io_block *msg, uint32_t subtype, const uint32_t addr[4], const uint32_t mask[4], uint32_t pos, struct malloc_type *mtype)
 {
+	if (msg == NULL || mtype == NULL || pos >= msg->nargs)
+		return -1;
 	userfw_msg_set_arg(msg, userfw_msg_alloc_block(T_IPv6, subtype, mtype), pos);
 	bcopy(addr, msg->args[pos]->data.ipv6.addr, sizeof(uint32_t)*4);
 	bcopy(mask, msg->args[pos]->data.ipv6.mask, sizeof(uint32_t)*4);
@@ -287,6 +301,8 @@ userfw_msg_insert_action(struct userfw_io_block *msg, uint32_t subtype, const us
 {
 	int i;
 
+	if (msg == NULL || action == NULL || mtype == NULL || pos >= msg->nargs)
+		return -1;
 	userfw_msg_set_arg(msg, userfw_msg_alloc_container(T_ACTION, subtype, action->nargs + 2, mtype), pos);
 	userfw_msg_insert_uint32(msg->args[pos], ST_MOD_ID, action->mod, 0, mtype);
 	userfw_msg_insert_uint32(msg->args[pos], ST_OPCODE, action->op, 1, mtype);
@@ -302,6 +318,8 @@ userfw_msg_insert_match(struct userfw_io_block *msg, uint32_t subtype, const use
 {
 	int i;
 
+	if (msg == NULL || match == NULL || mtype == NULL || pos >= msg->nargs)
+		return -1;
 	userfw_msg_set_arg(msg, userfw_msg_alloc_container(T_MATCH, subtype, match->nargs + 2, mtype), pos);
 	userfw_msg_insert_uint32(msg->args[pos], ST_MOD_ID, match->mod, 0, mtype);
 	userfw_msg_insert_uint32(msg->args[pos], ST_OPCODE, match->op, 1, mtype);
@@ -315,37 +333,38 @@ userfw_msg_insert_match(struct userfw_io_block *msg, uint32_t subtype, const use
 int
 userfw_msg_insert_arg(struct userfw_io_block *msg, uint32_t subtype, const userfw_arg *arg, uint32_t pos, struct malloc_type *mtype)
 {
+	int ret = 0;
 	switch(arg->type)
 	{
 	case T_STRING:
-		userfw_msg_insert_string(msg, subtype, arg->string.data, arg->string.length, pos, mtype);
+		ret = userfw_msg_insert_string(msg, subtype, arg->string.data, arg->string.length, pos, mtype);
 		break;
 	case T_HEXSTRING:
-		userfw_msg_insert_hexstring(msg, subtype, arg->string.data, arg->string.length, pos, mtype);
+		ret = userfw_msg_insert_hexstring(msg, subtype, arg->string.data, arg->string.length, pos, mtype);
 		break;
 	case T_UINT16:
-		userfw_msg_insert_uint16(msg, subtype, arg->uint16.value, pos, mtype);
+		ret = userfw_msg_insert_uint16(msg, subtype, arg->uint16.value, pos, mtype);
 		break;
 	case T_UINT32:
-		userfw_msg_insert_uint32(msg, subtype, arg->uint32.value, pos, mtype);
+		ret = userfw_msg_insert_uint32(msg, subtype, arg->uint32.value, pos, mtype);
 		break;
 	case T_UINT64:
-		userfw_msg_insert_uint64(msg, subtype, arg->uint64.value, pos, mtype);
+		ret = userfw_msg_insert_uint64(msg, subtype, arg->uint64.value, pos, mtype);
 		break;
 	case T_IPv4:
-		userfw_msg_insert_ipv4(msg, subtype, arg->ipv4.addr, arg->ipv4.mask, pos, mtype);
+		ret = userfw_msg_insert_ipv4(msg, subtype, arg->ipv4.addr, arg->ipv4.mask, pos, mtype);
 		break;
 	case T_IPv6:
-		userfw_msg_insert_ipv6(msg, subtype, arg->ipv6.addr, arg->ipv6.mask, pos, mtype);
+		ret = userfw_msg_insert_ipv6(msg, subtype, arg->ipv6.addr, arg->ipv6.mask, pos, mtype);
 		break;
 	case T_MATCH:
-		userfw_msg_insert_match(msg, subtype, arg->match.p, pos, mtype);
+		ret = userfw_msg_insert_match(msg, subtype, arg->match.p, pos, mtype);
 		break;
 	case T_ACTION:
-		userfw_msg_insert_action(msg, subtype, arg->action.p, pos, mtype);
+		ret = userfw_msg_insert_action(msg, subtype, arg->action.p, pos, mtype);
 		break;
 	}
-	return 0;
+	return ret;
 }
 
 void
