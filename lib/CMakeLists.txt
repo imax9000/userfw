@@ -7,6 +7,9 @@ file(GLOB C_SRCS *.c)
 file(GLOB C_HEADERS *.h)
 
 add_library(userfw SHARED ${C_SRCS})
+set_target_properties(userfw PROPERTIES 
+	SOVERSION 1
+	VERSION 1.0)
 
 install(FILES ${C_HEADERS}
 	DESTINATION include/userfw)

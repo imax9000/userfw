@@ -93,11 +93,12 @@ fill_modinfo(struct userfw_connection *c, struct userfw_modinfo *dst, userfw_mod
 {
 	struct userfw_io_block *msg = NULL, *cur;
 	int ret = 0, i, j;
+	userfw_arg modid;
 
-	if ((ret = userfw_send_modinfo_cmd(c, id)) < 0)
-		return ret;
+	modid.type = T_UINT32;
+	modid.uint32.value = id;
 
-	msg = userfw_recv_msg(c);
+	msg = userfw_exec_command(c, USERFW_BASE_MOD, CMD_MODINFO, &modid, 1);
 	if (msg == NULL)
 		return -1;
 
@@ -196,8 +197,7 @@ userfw_modlist_get(struct userfw_connection *c)
 	struct userfw_io_block *msg = NULL, *cur;
 	int i, j, count;
 
-	if (userfw_send_modlist_cmd(c) >= 0 &&
-		(msg = userfw_recv_msg(c)) != NULL)
+	if ((msg = userfw_exec_command(c, USERFW_BASE_MOD, CMD_MODLIST, NULL, 0)) != NULL)
 	{
 		ret = malloc(sizeof(*ret));
 		if (ret != NULL)

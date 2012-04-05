@@ -107,10 +107,9 @@ parse_opts(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
 	int start_from;
+	uint32_t cookie;
 	struct userfw_connection *c = NULL;
 	struct userfw_io_block *cmd = NULL;
-	unsigned char *buf = NULL;
-	size_t len;
 
 	start_from = parse_opts(argc, argv);
 	if (start_from == 0) // no options was given
@@ -143,34 +142,22 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	len = userfw_msg_calc_size(cmd);
-	buf = malloc(len);
-	if (buf == NULL)
-	{
-		fprintf(stderr, "Failed to allocate %zu bytes\n", len);
-		return 1;
-	}
-
-	userfw_msg_serialize(cmd, buf, len);
-
 	if (mode == DEBUG)
 	{
 		printf("Message:\n");
 		print_msg_full(cmd, modlist);
 	}
 
-	userfw_msg_free(cmd);
-
-	if (userfw_send(c, buf, len) < 0)
+	if (userfw_send(c, cmd, &cookie) < 0)
 	{
-		perror("userfw_send_to");
+		perror("userfw_send");
 		fprintf(stderr, "Failed to send command\n");
 		return 1;
 	}
-	free(buf);
-	buf = NULL;
 
-	cmd = userfw_recv_msg(c);
+	userfw_msg_free(cmd);
+
+	cmd = userfw_recv_wait(c, cookie, NULL);
 	if (cmd == NULL)
 	{
 		fprintf(stderr, "Failed to read reply\n");
@@ -189,6 +176,10 @@ int main(int argc, char *argv[])
 		print_msg_full(cmd, modlist);
 		break;
 	}
+
+	userfw_msg_free(cmd);
+	userfw_modlist_destroy(modlist);
+	userfw_disconnect(c);
 
 	return 0;
 }

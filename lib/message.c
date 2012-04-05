@@ -437,14 +437,12 @@ subblocks_count(unsigned char *buf, size_t len)
 	return ret;
 }
 
-#include <stdio.h>
-
 struct userfw_io_block *
 userfw_msg_parse(unsigned char *buf, size_t len)
 {
 	struct userfw_io_block *ret = NULL;
 	struct userfw_io_header *hdr;
-	unsigned char *data;;
+	unsigned char *data;
 
 	if (buf == NULL)
 		return NULL;

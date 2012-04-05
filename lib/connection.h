@@ -43,13 +43,31 @@ struct userfw_connection
 	int fd;
 };
 
-struct userfw_connection * userfw_connect();
+struct userfw_connection * userfw_connect(void);
 int userfw_disconnect(struct userfw_connection *);
 
-int userfw_send(struct userfw_connection *, unsigned char*, size_t);
-int userfw_send_modlist_cmd(struct userfw_connection *);
-int userfw_send_modinfo_cmd(struct userfw_connection *, userfw_module_id_t);
-struct userfw_io_block * userfw_recv_msg(struct userfw_connection *);
+/* sends message to kernel, sets cookie */
+int userfw_send(struct userfw_connection *, struct userfw_io_block *, uint32_t *cookie);
+
+/* waits for next message, returns NULL if cookie does not match */
+struct userfw_io_block * userfw_recv(struct userfw_connection *, uint32_t cookie, int *result);
+
+/* waits for message with specific cookie */
+struct userfw_io_block * userfw_recv_wait(struct userfw_connection *, uint32_t cookie, int *result);
+
+/* returns immediately even if message with specific cookie still not received */
+struct userfw_io_block * userfw_recv_nowait(struct userfw_connection *, uint32_t cookie, int *result);
+
+/* returns message without cookie */
+struct userfw_io_block * userfw_recv_unhandled(struct userfw_connection *, int *result);
+struct userfw_io_block * userfw_recv_unhandled_nowait(struct userfw_connection *, int *result);
+
+/* returns message and it's cookie without any filtering (useful for custom dispatcher) */
+struct userfw_io_block * userfw_recv_next(struct userfw_connection *, uint32_t *cookie, int *result);
+struct userfw_io_block * userfw_recv_next_nowait(struct userfw_connection *, uint32_t *cookie, int *result);
+
+/* sends message with command call and returns answer */
+struct userfw_io_block * userfw_exec_command(struct userfw_connection *, userfw_module_id_t, opcode_t, userfw_arg*, uint8_t);
 
 #ifdef __cplusplus
 }
