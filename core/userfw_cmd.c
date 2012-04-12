@@ -65,7 +65,7 @@ userfw_cmd_dispatch(unsigned char *buf,
 
 	if (cmd == NULL || (cmd != msg && !BLOCK_FITS_INTO_OUTER(cmd, msg)))
 		return EINVAL;
-	if (cookie != NULL && (!BLOCK_FITS_INTO_OUTER(cookie, cmd) || cookie->length != sizeof(*cookie) + sizeof(uint32_t)))
+	if (cookie != NULL && (!BLOCK_FITS_INTO_OUTER(cookie, msg) || cookie->length != sizeof(*cookie) + sizeof(uint32_t)))
 		return EINVAL;
 
 	mod_id = userfw_io_find_block((char*)cmd + sizeof(*cmd), cmd->length - sizeof(*cmd), T_UINT32, ST_MOD_ID);
