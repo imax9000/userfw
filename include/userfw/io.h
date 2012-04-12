@@ -105,7 +105,7 @@ struct userfw_io_block
 {
 	uint32_t	type;
 	uint32_t	subtype;
-	uint8_t	nargs;
+	uint32_t	nargs;
 	struct userfw_io_block **args;
 	userfw_arg data;
 };
