@@ -33,7 +33,9 @@
 #include <userfw/module.h>
 
 #include <netinet/in.h>
+#include <netinet/in_var.h>
 #include <netinet/ip.h>
+#include <netinet/ip_var.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/sctp.h>
@@ -56,11 +58,12 @@ struct call_stack_mtag
 {
 	struct m_tag	tag;
 	SLIST_HEAD(call_stack_head, call_stack_entry) call_stack;
+	uint8_t	direction;
 };
 
 static struct call_stack_entry * get_stack_entry(struct mbuf *m, userfw_ruleset *ruleset);
 static int is_top_of_stack(struct mbuf *m, userfw_ruleset *ruleset);
-static struct call_stack_entry * add_to_stack(struct mbuf *m, userfw_ruleset *ruleset);
+static struct call_stack_entry * add_to_stack(struct mbuf *m, userfw_ruleset *ruleset, userfw_chk_args *args);
 static int remove_from_stack(struct mbuf *m, struct call_stack_entry *entry);
 
 struct match_cache_mtag
@@ -160,7 +163,7 @@ check_packet(struct mbuf **mb, userfw_chk_args *args, userfw_ruleset *ruleset)
 	cs_entry = get_stack_entry(*mb, ruleset);
 	if (cs_entry == NULL)
 	{
-		cs_entry = add_to_stack(*mb, ruleset);
+		cs_entry = add_to_stack(*mb, ruleset, args);
 		if (cs_entry != NULL)
 			cs_entry->rule_number = 0;
 	}
@@ -272,7 +275,7 @@ free_call_stack(struct m_tag *tag)
 }
 
 static struct call_stack_mtag *
-init_call_stack(struct mbuf *m)
+init_call_stack(struct mbuf *m, int direction)
 {
 	struct call_stack_mtag *mtag;
 
@@ -281,6 +284,7 @@ init_call_stack(struct mbuf *m)
 	{
 		SLIST_INIT(&(mtag->call_stack));
 		mtag->tag.m_tag_free = free_call_stack;
+		mtag->direction = direction;
 		m_tag_prepend(m, &(mtag->tag));
 	}
 	return mtag;
@@ -288,14 +292,14 @@ init_call_stack(struct mbuf *m)
 
 /* Return value can be null if malloc(9) failed to allocate memory */
 static struct call_stack_entry *
-add_to_stack(struct mbuf *m, userfw_ruleset *ruleset)
+add_to_stack(struct mbuf *m, userfw_ruleset *ruleset, userfw_chk_args *args)
 {
 	struct call_stack_mtag *mtag;
 	struct call_stack_entry *entry = NULL;
 
 	mtag = (struct call_stack_mtag *)m_tag_locate(m, MTAG_USERFW_CALL_STACK, 0, NULL);
 	if (mtag == NULL)
-		mtag = init_call_stack(m);
+		mtag = init_call_stack(m, args->dir);
 	if (mtag != NULL)
 	{
 		entry = malloc(sizeof(*entry), M_TEMP, M_NOWAIT);
@@ -360,4 +364,29 @@ cache_dtor(struct m_tag *mtag)
 	userfw_cache *cache = ((struct match_cache_mtag *)mtag)->cache;
 	if (cache != NULL)
 		userfw_cache_destroy(cache);
+}
+
+/* A bit ugly but should work for some time */
+int
+userfw_return_packet(struct mbuf **mb)
+{
+	struct call_stack_mtag	*mtag;
+	int err = 0;
+	
+	mtag = (struct call_stack_mtag *)m_tag_locate(*mb, MTAG_USERFW_CALL_STACK, 0, NULL);
+	if (mtag == NULL)
+		return EINVAL;
+
+	switch (mtag->direction)
+	{
+	case USERFW_IN:
+		ip_input(*mb);
+		*mb = NULL;
+		break;
+	case USERFW_OUT:
+		err = ip_output(*mb, NULL, NULL, IP_FORWARDING, NULL, NULL);
+		*mb = NULL;	// XXX: is it needed in all cases?
+		break;
+	}
+	return err;
 }
