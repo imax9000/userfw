@@ -80,5 +80,13 @@ int check_packet(struct mbuf **mb, userfw_chk_args *args, userfw_ruleset *rulese
 
 void free_rule(userfw_rule *, struct malloc_type *);
 
+/*
+ * This function should be called to continue packet processing after returning
+ * packet from other subsystem (i.e. dummynet, netgraph).
+ * Returns 0 upon success and any other value on error. If pointer to mbuf not
+ * set to NULL then caller is the one who responsible to free mbuf.
+ */
+int userfw_return_packet(struct mbuf **);
+
 #endif /* _KERNEL */
 #endif /* USERFW_RULESET_H */
