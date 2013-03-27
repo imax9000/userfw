@@ -226,7 +226,7 @@ match_packet_len(struct mbuf **mb, userfw_chk_args *args, userfw_match *match, u
 	switch(mtod(*mb, struct ip *)->ip_v)
 	{
 	case 4:
-		len = mtod(*mb, struct ip *)->ip_len; /* XXX: already in host byte order */
+		len = ntohs(mtod(*mb, struct ip *)->ip_len);
 		break;
 	case 6:
 		len = ntohs(mtod(*mb, struct ip6_hdr *)->ip6_plen) + sizeof(struct ip6_hdr);

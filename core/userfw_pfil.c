@@ -32,6 +32,8 @@
 #include <sys/mbuf.h>
 #include <net/if.h>
 #include <net/pfil.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
 #include "userfw.h"
 
 int userfw_pfil_hook(void *arg, struct mbuf **mb, struct ifnet *ifp, int dir, struct inpcb *pcb);
@@ -53,13 +55,33 @@ int
 userfw_pfil_hook(void *arg, struct mbuf **mb, struct ifnet *ifp, int dir, struct inpcb *pcb)
 {
 	userfw_chk_args args;
+	int result;
+#if __FreeBSD__ < 10
+	int ipv4;
+#endif
 	
 	args.af = (long)arg;
 	args.ifp = ifp;
 	args.dir = (dir == PFIL_IN) ? USERFW_IN : USERFW_OUT; /* looks ugly */
 	args.inpcb = pcb;
 
-	return userfw_chk(mb, &args);
+
+#if __FreeBSD__ < 10
+	ipv4 = (((mtod(*mb, char *)[0] & 0xf0) >> 4) == 4);
+	if (ipv4)
+	{
+		mtod(*mb, struct ip *)->ip_len = htons(mtod(*mb, struct ip *)->ip_len);
+	}
+#endif
+	result = userfw_chk(mb, &args);
+#if __FreeBSD__ < 10
+	if (ipv4)
+	{
+		mtod(*mb, struct ip *)->ip_len = ntohs(mtod(*mb, struct ip *)->ip_len);
+	}
+#endif
+
+	return result;
 }
 
 int
