@@ -37,7 +37,7 @@
 #include <net/if.h>
 #include <netinet/ip_fw.h>
 #include <netinet/ip_var.h>
-#include <netinet/ipfw/ip_fw_private.h>
+#include "ip_fw_private.h"
 
 static int
 match_ipfw_table_ctor(userfw_match *match)
