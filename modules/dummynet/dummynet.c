@@ -38,7 +38,7 @@
 #include <netinet/ip_fw.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_dummynet.h>
-#include <netinet/ipfw/ip_fw_private.h>
+#include "ip_fw_private.h"
 
 static int
 send_to_dummynet(struct mbuf **mb, userfw_chk_args *args, uint16_t num, int is_pipe)
