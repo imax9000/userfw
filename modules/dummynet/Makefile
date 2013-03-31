@@ -1,7 +1,9 @@
 SRCS=	dummynet.c
 KMOD=	userfw_dummynet
 KMODDIR?=	/boot/modules
-CFLAGS+=	-I${S}/../../include -I${MAKEOBJDIRPREFIX}${S}
+CFLAGS+=	-I${S}/../../include
+# CMake will put generated ip_fw_private.h in our obj dir
+CFLAGS+=	-I${MAKEOBJDIRPREFIX}${S}
 
 .if defined(SKIP_OPCODE_VERIFICATION)
 CFLAGS+=	-DSKIP_OPCODE_VERIFICATION

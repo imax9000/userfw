@@ -8,6 +8,8 @@ function(declare_userfw_module_with_name modname filename)
 		list(APPEND MAKE_ARGS "SKIP_OPCODE_VERIFICATION=1")
 	endif (NOT OPCODE_VERIFICATION)
 
+	# ${CMAKE_BINARY_DIR}/${CMAKE_CURRENT_SOURCE_DIR} is where `make obj` supposed to create
+	# directory for object files
 	add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/${CMAKE_CURRENT_SOURCE_DIR}/${filename}.ko"
 		COMMAND make ${MAKE_ARGS} obj
 		COMMAND make ${MAKE_ARGS}
