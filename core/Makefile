@@ -12,7 +12,7 @@ SRCS=	userfw_mod.c \
 	ip.c \
 	ipv4.c
 KMOD=	userfw
-CFLAGS+=	-I../include
+CFLAGS+=	-I${S}/../include
 KMODDIR?=	/boot/modules
 PREFIX?=	/usr/local
 
@@ -25,8 +25,8 @@ CFLAGS+=	-DSKIP_OPCODE_VERIFICATION
 
 afterinstall:
 	${INSTALL} -d "${PREFIX}/include/userfw/modules"
-	${INSTALL} base.h "${PREFIX}/include/userfw/modules"
-	${INSTALL} ip.h "${PREFIX}/include/userfw/modules"
-	${INSTALL} ipv4.h "${PREFIX}/include/userfw/modules"
+	${INSTALL} ${S}/base.h "${PREFIX}/include/userfw/modules"
+	${INSTALL} ${S}/ip.h "${PREFIX}/include/userfw/modules"
+	${INSTALL} ${S}/ipv4.h "${PREFIX}/include/userfw/modules"
 
 .include <bsd.kmod.mk>
