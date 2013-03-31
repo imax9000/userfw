@@ -1,7 +1,7 @@
 SRCS=	ipfw.c
 KMOD=	userfw_ipfw
 KMODDIR?=	/boot/modules
-CFLAGS+=	-I../../include
+CFLAGS+=	-I${S}/../../include -I${MAKEOBJDIRPREFIX}${S}
 
 .if defined(SKIP_OPCODE_VERIFICATION)
 CFLAGS+=	-DSKIP_OPCODE_VERIFICATION
@@ -9,6 +9,6 @@ CFLAGS+=	-DSKIP_OPCODE_VERIFICATION
 
 afterinstall:
 	${INSTALL} -d "${PREFIX}/include/userfw/modules"
-	${INSTALL} ipfw.h "${PREFIX}/include/userfw/modules"
+	${INSTALL} ${S}/ipfw.h "${PREFIX}/include/userfw/modules"
 
 .include <bsd.kmod.mk>
