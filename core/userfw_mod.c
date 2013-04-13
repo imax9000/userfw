@@ -59,7 +59,7 @@ static moduledata_t userfw_mod = {
 	0
 };
 
-MODULE_VERSION(userfw_core, 1);
+MODULE_VERSION(userfw_core, USERFW_KABI_VERSION);
 
 #ifndef SKIP_DOMAIN_STUB
 MODULE_DEPEND(userfw_core, userfw_domain_stub, 1, 1, 1);

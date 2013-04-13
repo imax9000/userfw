@@ -32,6 +32,7 @@
 #include <userfw/cache.h>
 #ifdef _KERNEL
 #include <sys/param.h>
+#include <sys/module.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
@@ -41,6 +42,10 @@ struct thread;
 struct socket;
 
 MALLOC_DECLARE(M_USERFW);
+
+#define USERFW_KABI_VERSION	2
+#define DEPEND_ON_USERFW_CORE(m)	MODULE_DEPEND(m, userfw_core, USERFW_KABI_VERSION, USERFW_KABI_VERSION, USERFW_KABI_VERSION)
+
 #endif
 
 #define	USERFW_ARGS_MAX	8

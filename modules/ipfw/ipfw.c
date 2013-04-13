@@ -199,7 +199,7 @@ static moduledata_t ipfw_mod =
 };
 
 MODULE_VERSION(userfw_ipfw, 1);
-MODULE_DEPEND(userfw_ipfw, userfw_core, 1, 1, 1);
+DEPEND_ON_USERFW_CORE(userfw_ipfw);
 MODULE_DEPEND(userfw_ipfw, ipfw, 2, 2, 2);
 
 DECLARE_MODULE(userfw_ipfw, ipfw_mod, SI_SUB_USERFW, SI_ORDER_USERFW_MOD);

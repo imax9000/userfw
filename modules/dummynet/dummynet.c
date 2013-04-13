@@ -167,7 +167,7 @@ static moduledata_t dummynet_mod =
 };
 
 MODULE_VERSION(userfw_dummynet, 1);
-MODULE_DEPEND(userfw_dummynet, userfw_core, 1, 1, 1);
+DEPEND_ON_USERFW_CORE(userfw_dummynet);
 MODULE_DEPEND(userfw_dummynet, dummynet, 3, 3, 3);
 
 DECLARE_MODULE(userfw_dummynet, dummynet_mod, SI_SUB_USERFW, SI_ORDER_USERFW_MOD);

@@ -111,6 +111,6 @@ static moduledata_t	userfw_ipv4_mod = {
 };
 
 MODULE_VERSION(userfw_ipv4, 1);
-MODULE_DEPEND(userfw_ipv4, userfw_core, 1, 1, 1);
+DEPEND_ON_USERFW_CORE(userfw_ipv4);
 
 DECLARE_MODULE(userfw_ipv4, userfw_ipv4_mod, SI_SUB_USERFW, SI_ORDER_USERFW_MOD);

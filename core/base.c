@@ -435,6 +435,6 @@ static moduledata_t	userfw_base_mod = {
 };
 
 MODULE_VERSION(userfw_base, 1);
-MODULE_DEPEND(userfw_base, userfw_core, 1, 1, 1);
+DEPEND_ON_USERFW_CORE(userfw_base);
 
 DECLARE_MODULE(userfw_base, userfw_base_mod, SI_SUB_USERFW, SI_ORDER_USERFW_MOD);

@@ -288,6 +288,6 @@ static moduledata_t	userfw_ip_mod = {
 };
 
 MODULE_VERSION(userfw_ip, 1);
-MODULE_DEPEND(userfw_ip, userfw_core, 1, 1, 1);
+DEPEND_ON_USERFW_CORE(userfw_ip);
 
 DECLARE_MODULE(userfw_ip, userfw_ip_mod, SI_SUB_USERFW, SI_ORDER_USERFW_MOD);
