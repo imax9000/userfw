@@ -307,7 +307,7 @@ static moduledata_t ng_connector_mod =
 };
 
 MODULE_VERSION(ng_userfw_connector, 1);
-MODULE_DEPEND(ng_userfw_connector, userfw_core, 1, 1, 1);
+DEPEND_ON_USERFW_CORE(ng_userfw_connector);
 MODULE_DEPEND(ng_userfw_connector, netgraph, NG_ABI_VERSION, NG_ABI_VERSION, NG_ABI_VERSION);
 
 DECLARE_MODULE(ng_userfw_connector, ng_connector_mod, SI_SUB_USERFW, SI_ORDER_USERFW_MOD);

@@ -316,6 +316,6 @@ static moduledata_t counters_mod =
 };
 
 MODULE_VERSION(userfw_counters, 1);
-MODULE_DEPEND(userfw_counters, userfw_core, 1, 1, 1);
+DEPEND_ON_USERFW_CORE(userfw_counters);
 
 DECLARE_MODULE(userfw_counters, counters_mod, SI_SUB_USERFW, SI_ORDER_USERFW_MOD);

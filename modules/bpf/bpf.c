@@ -133,6 +133,6 @@ static moduledata_t bpf_mod =
 };
 
 MODULE_VERSION(userfw_bpf, 1);
-MODULE_DEPEND(userfw_bpf, userfw_core, 1, 1, 1);
+DEPEND_ON_USERFW_CORE(userfw_bpf);
 
 DECLARE_MODULE(userfw_bpf, bpf_mod, SI_SUB_USERFW, SI_ORDER_USERFW_MOD);

@@ -121,6 +121,6 @@ static moduledata_t dummy_mod =
 };
 
 MODULE_VERSION(userfw_dummy, 1);
-MODULE_DEPEND(userfw_dummy, userfw_core, 1, 1, 1);
+DEPEND_ON_USERFW_CORE(userfw_dummy);
 
 DECLARE_MODULE(userfw_dummy, dummy_mod, SI_SUB_USERFW, SI_ORDER_USERFW_MOD);

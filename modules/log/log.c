@@ -218,6 +218,6 @@ static moduledata_t log_mod =
 };
 
 MODULE_VERSION(userfw_log, 1);
-MODULE_DEPEND(userfw_log, userfw_core, 1, 1, 1);
+DEPEND_ON_USERFW_CORE(userfw_log);
 
 DECLARE_MODULE(userfw_log, log_mod, SI_SUB_USERFW, SI_ORDER_USERFW_MOD);
