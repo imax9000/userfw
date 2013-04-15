@@ -75,7 +75,7 @@ userfw_pfil_hook(void *arg, struct mbuf **mb, struct ifnet *ifp, int dir, struct
 #endif
 	result = userfw_chk(mb, &args);
 #if __FreeBSD__ < 10
-	if (ipv4)
+	if (ipv4 && (*mb) != NULL)
 	{
 		mtod(*mb, struct ip *)->ip_len = ntohs(mtod(*mb, struct ip *)->ip_len);
 	}
