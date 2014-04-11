@@ -9,8 +9,10 @@ function(declare_userfw_module_with_name modname filename srcs hdrs)
 .PATH: ${CMAKE_CURRENT_SOURCE_DIR}
 
 KMOD=	${filename}
-KMODDIR=	${KMODDIR}
-CFLAGS+=	-I${CMAKE_CURRENT_SOURCE_DIR}/../../include\n")
+KMODDIR=	${KMODDIR}\n")
+	if (USERFW_INCLUDE_DIR)
+		file(APPEND "${MAKEFILE}" "CFLAGS+=	-I${USERFW_INCLUDE_DIR}\n")
+	endif (USERFW_INCLUDE_DIR)
 	if (NOT OPCODE_VERIFICATION)
 		file(APPEND "${MAKEFILE}" "CFLAGS+=	-DSKIP_OPCODE_VERIFICATION\n")
 	endif (NOT OPCODE_VERIFICATION)

@@ -1,5 +1,7 @@
 include(userfw_module)
 
+set(USERFW_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../include")
+
 add_subdirectory(bpf)
 add_subdirectory(counters)
 add_subdirectory(dummy EXCLUDE_FROM_ALL)
