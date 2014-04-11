@@ -28,6 +28,7 @@
 #include <userfw/module.h>
 #include <sys/types.h>
 #include <sys/malloc.h>
+#include <sys/systm.h>
 
 userfw_ruleset global_rules;
 
@@ -36,6 +37,7 @@ userfw_ruleset_init(userfw_ruleset *p, const char *name)
 {
 	p->rule = NULL;
 	USERFW_INIT_LOCK(p, name);
+	bzero(&(p->rm_internal), sizeof(p->rm_internal));
 }
 
 static void

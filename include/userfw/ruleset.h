@@ -30,7 +30,7 @@
 #ifdef _KERNEL
 #include <sys/param.h>
 #include <sys/lock.h>
-#include <sys/rwlock.h>
+#include <sys/rmlock.h>
 #include <userfw/module.h>
 #include <userfw/io.h>
 
@@ -46,17 +46,18 @@ typedef struct __userfw_rule
 typedef struct __userfw_ruleset
 {
 	userfw_rule	*rule;
-	struct rwlock	mtx;
+	struct rmlock	mtx;
+	struct rm_priotracker rm_internal;
 } userfw_ruleset;
 
 extern userfw_ruleset global_rules;
 
-#define USERFW_RLOCK(p)	rw_rlock(&((p)->mtx))
-#define USERFW_WLOCK(p)	rw_wlock(&((p)->mtx))
-#define USERFW_RUNLOCK(p)	rw_runlock(&((p)->mtx))
-#define USERFW_WUNLOCK(p)	rw_wunlock(&((p)->mtx))
-#define USERFW_INIT_LOCK(p, s)	rw_init(&((p)->mtx), (s))
-#define USERFW_UNINIT_LOCK(p)	rw_destroy(&((p)->mtx))
+#define USERFW_RLOCK(p)	rm_rlock(&((p)->mtx), &((p)->rm_internal))
+#define USERFW_WLOCK(p)	rm_wlock(&((p)->mtx))
+#define USERFW_RUNLOCK(p)	rm_runlock(&((p)->mtx), &((p)->rm_internal))
+#define USERFW_WUNLOCK(p)	rm_wunlock(&((p)->mtx))
+#define USERFW_INIT_LOCK(p, s)	rm_init(&((p)->mtx), (s))
+#define USERFW_UNINIT_LOCK(p)	rm_destroy(&((p)->mtx))
 
 struct malloc_type;
 
